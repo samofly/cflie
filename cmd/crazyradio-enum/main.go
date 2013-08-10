@@ -39,7 +39,7 @@ func listDongles() error {
 	}
 
 	for _, dev := range devs {
-		fmt.Printf("dev: %v\n", dev)
+		fmt.Printf("CrazyRadio USB dongle v%s\n", dev.Device)
 	}
 
 	return nil
