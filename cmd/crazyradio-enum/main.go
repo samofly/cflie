@@ -92,6 +92,10 @@ func reader(in usb.Endpoint, ch chan<- []byte) {
 		}
 		p := make([]byte, n)
 		copy(p, buf)
+		// Cut off the ACK byte
+		if len(p) >= 1 {
+			p = p[1:]
+		}
 		ch <- p
 		log.Printf("Reader, len: %d, package: %v", n, buf[:n])
 	}
