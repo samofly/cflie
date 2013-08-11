@@ -67,7 +67,7 @@ func initDongle(d *usb.Device, ch uint16, rate DataRate) (err error) {
 	if err = control(d, SET_RADIO_ARC, 3, nil); err != nil {
 		return
 	}
-	if err = control(d, SET_RADIO_ARD, 32, nil); err != nil {
+	if err = control(d, SET_RADIO_ARD, 0x80|32, nil); err != nil {
 		return
 	}
 	if err = control(d, SET_RADIO_ARC, 10, nil); err != nil {
@@ -83,7 +83,7 @@ func initDongle(d *usb.Device, ch uint16, rate DataRate) (err error) {
 }
 
 func reader(in usb.Endpoint, ch chan<- []byte) {
-	buf := make([]byte, 128)
+	buf := make([]byte, 64)
 	for {
 		n, err := in.Read(buf)
 		if err != nil {
@@ -171,12 +171,13 @@ func listDongles() error {
 	}
 
 	controller := devs[0]
+	controller.ReadTimeout = 50 * time.Millisecond
 
 	in, err := controller.OpenEndpoint(
 		/* config */ 1,
 		/* iface */ 0,
 		/* setup */ 0,
-		/* endpoint */ 1|uint8(usb.ENDPOINT_DIR_IN))
+		/* endpoint */ 0x81|uint8(usb.ENDPOINT_DIR_IN))
 	if err != nil {
 		return fmt.Errorf("OpenEndpoint(IN): %v", err)
 	}
