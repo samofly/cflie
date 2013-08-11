@@ -97,21 +97,23 @@ func reader(in usb.Endpoint, ch chan<- []byte) {
 			p = p[1:]
 		}
 		ch <- p
-		log.Printf("Reader, len: %d, package: %v", n, buf[:n])
+		// log.Printf("Reader, len: %d, package: %v", n, buf[:n])
 	}
 }
 
 func consume(cnt int, readCh <-chan []byte) {
 	for {
-		log.Printf("Consuming at least %d package", cnt)
+		// log.Printf("Consuming at least %d package", cnt)
 		for i := 0; i < cnt; i++ {
-			p := <-readCh
-			log.Printf("Writer, incoming package: %v", p)
+			<-readCh
+			//p := <-readCh
+			// log.Printf("Writer, incoming package: %v", p)
 		}
 
 		select {
-		case p := <-readCh:
-			log.Printf("Writer, incoming package: %v", p)
+		//case p := <-readCh:
+		case <-readCh:
+			// log.Printf("Writer, incoming package: %v", p)
 		default:
 			return
 		}
@@ -119,7 +121,7 @@ func consume(cnt int, readCh <-chan []byte) {
 }
 
 func sendPackage(out usb.Endpoint, readCh <-chan []byte, p []byte) (err error) {
-	log.Printf("sendPackage: %v", p)
+	// log.Printf("sendPackage: %v", p)
 	consume(0, readCh)
 	_, err = out.Write(p)
 	if err != nil {
@@ -131,6 +133,7 @@ func sendPackage(out usb.Endpoint, readCh <-chan []byte, p []byte) (err error) {
 
 func writer(out usb.Endpoint, writeCh <-chan []byte, readCh <-chan []byte) {
 	buf := []byte{0xFF}
+	cnt := 0
 	for {
 		var p []byte
 		select {
@@ -141,6 +144,10 @@ func writer(out usb.Endpoint, writeCh <-chan []byte, readCh <-chan []byte) {
 		err := sendPackage(out, readCh, p)
 		if err != nil {
 			log.Printf("Error: writer: %v", err)
+		}
+		cnt++
+		if cnt%100 == 0 {
+			log.Printf("Total packages sent: %d, p: %v", cnt, p)
 		}
 	}
 }
@@ -205,15 +212,6 @@ func listDongles() error {
 	go reader(in, readCh)
 	go writer(out, writeCh, readCh)
 
-	writeCh <- []byte{44, 1}
-	writeCh <- []byte{44, 1}
-	for i := 0; i <= 26; i++ {
-		writeCh <- []byte{44, 0, byte(i)}
-	}
-	writeCh <- []byte{92, 1}
-	for i := 0; i <= 14; i++ {
-		writeCh <- []byte{92, 0, byte(i)}
-	}
 	writeCh <- []byte{60, 0, 0, 0, 0, 0, 0, 0, 128, 250, 117, 61, 64, 48, 117}
 
 	fmt.Printf("Press Ctrl+C to exit\n")
