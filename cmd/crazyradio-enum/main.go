@@ -116,9 +116,13 @@ func consume(cnt int, readCh <-chan []byte) {
 	for {
 		// log.Printf("Consuming at least %d package", cnt)
 		for i := 0; i < cnt; i++ {
-			<-readCh
-			//p := <-readCh
-			// log.Printf("Writer, incoming package: %v", p)
+			p := <-readCh
+			if len(p) < 4 {
+				log.Printf("Short packet arrived: %v", p)
+			} else {
+				index := uint32(p[0]) + (uint32(p[1]) << 8) + (uint32(p[2]) << 16) + (uint32(p[3]) << 24)
+				log.Printf("Incoming, index: %d", index)
+			}
 		}
 
 		select {
