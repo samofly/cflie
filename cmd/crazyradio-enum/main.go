@@ -10,11 +10,6 @@ import (
 	"github.com/kylelemons/gousb/usb"
 )
 
-const (
-	Vendor  = 0x1915
-	Product = 0x7777
-)
-
 type Request uint8
 
 const (
