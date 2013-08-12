@@ -84,6 +84,9 @@ func initDongle(d *usb.Device, ch uint16, rate DataRate) (err error) {
 
 func reader(in usb.Endpoint, ch chan<- []byte) {
 	buf := make([]byte, 64)
+	var cnt uint64
+	var lastCnt uint64
+	startTime := time.Now()
 	for {
 		n, err := in.Read(buf)
 		if err != nil {
@@ -97,6 +100,14 @@ func reader(in usb.Endpoint, ch chan<- []byte) {
 			p = p[1:]
 		}
 		ch <- p
+		cnt += uint64(len(p))
+		if cnt-lastCnt > 10000 {
+			now := time.Now()
+			log.Printf("Total bytes received: %d, speed: %f Kbits/s", cnt, float64(cnt*8)/now.Sub(startTime).Seconds())
+			lastCnt = cnt
+
+		}
+
 		// log.Printf("Reader, len: %d, package: %v", n, buf[:n])
 	}
 }
@@ -202,7 +213,7 @@ func listDongles() error {
 		return fmt.Errorf("OpenEndpoint(OUT): %v", err)
 	}
 
-	if err = initDongle(controller, 10, DATA_RATE_250K); err != nil {
+	if err = initDongle(controller, 10, DATA_RATE_1M); err != nil {
 		return fmt.Errorf("initDongle: %v", err)
 	}
 
