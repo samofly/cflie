@@ -15,7 +15,7 @@ func main() {
 		os.Exit(1)
 	}
 	if len(list) == 0 {
-		fmt.Fprintf(os.Stderr, "No Crazyradio devices found\n")
+		fmt.Fprintf(os.Stderr, "No CrazyRadio devices found\n")
 		os.Exit(1)
 	}
 	for idx, d := range list {

@@ -1,4 +1,4 @@
-### Raw Crazyradio performance benchmark
+### Raw CrazyRadio performance benchmark
 
 During the test, host software sent as much packets as possible to Crazyflie at 1 Mbit/s rate.
 Crazyflie was manually moved across the house, so that the distance and amount of obstacles have been significantly changed.
