@@ -110,7 +110,7 @@ func main() {
 		fail("Unable to list USB devices: %v\n", err)
 	}
 	if len(list) == 0 {
-		fail("No CrazyRadio dongle present")
+		fail("No CrazyRadio dongle present\n")
 	}
 	d, err := crazyradio.Open(ctx, list[0])
 	if err != nil {
