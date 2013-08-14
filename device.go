@@ -45,10 +45,7 @@ type Device interface {
 }
 
 // Open opens a CrazyRadio USB dongle
-func Open(info DeviceInfo) (Device, error) {
-	ctx := usb.NewContext()
-	defer ctx.Close()
-
+func Open(ctx *usb.Context, info DeviceInfo) (Device, error) {
 	d, err := ctx.ListDevices(func(desc *usb.Descriptor) bool {
 		if desc.Vendor == Vendor && desc.Product == Product &&
 			int(desc.Bus) == info.Bus() && int(desc.Address) == info.Address() &&
