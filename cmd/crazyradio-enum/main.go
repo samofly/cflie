@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/krasin/crazyradio"
-	"github.com/kylelemons/gousb/usb"
 )
 
 func reader(d crazyradio.Device, ch chan<- []byte) {
@@ -102,17 +101,14 @@ func fail(format string, args ...interface{}) {
 }
 
 func main() {
-	ctx := usb.NewContext()
-	defer ctx.Close()
-
-	list, err := crazyradio.ListDevices(ctx)
+	list, err := crazyradio.ListDevices()
 	if err != nil {
 		fail("Unable to list USB devices: %v\n", err)
 	}
 	if len(list) == 0 {
 		fail("No CrazyRadio dongle present\n")
 	}
-	d, err := crazyradio.Open(ctx, list[0])
+	d, err := crazyradio.Open(list[0])
 	if err != nil {
 		fail("Unable to open CrazyRadio (try running as root?): %v\n", err)
 	}

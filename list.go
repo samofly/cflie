@@ -17,7 +17,10 @@ type DeviceInfo interface {
 }
 
 // ListDevices returns the list of attached CrazyRadio devices.
-func ListDevices(ctx *usb.Context) ([]DeviceInfo, error) {
+func ListDevices() ([]DeviceInfo, error) {
+	ctx := usb.NewContext()
+	defer ctx.Close()
+
 	var d []DeviceInfo
 	_, err := ctx.ListDevices(func(desc *usb.Descriptor) bool {
 		if desc.Vendor == Vendor && desc.Product == Product {

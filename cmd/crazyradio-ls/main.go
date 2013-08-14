@@ -6,14 +6,10 @@ import (
 	"os"
 
 	"github.com/krasin/crazyradio"
-	"github.com/kylelemons/gousb/usb"
 )
 
 func main() {
-	ctx := usb.NewContext()
-	defer ctx.Close()
-
-	list, err := crazyradio.ListDevices(ctx)
+	list, err := crazyradio.ListDevices()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ListDevices: %v\n", err)
 		os.Exit(1)

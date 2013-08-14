@@ -45,7 +45,14 @@ type Device interface {
 }
 
 // Open opens a CrazyRadio USB dongle
-func Open(ctx *usb.Context, info DeviceInfo) (Device, error) {
+func Open(info DeviceInfo) (dev Device, err error) {
+	ctx := usb.NewContext()
+	ctxOwned := false
+	defer func() {
+		if !ctxOwned {
+			ctx.Close()
+		}
+	}()
 	d, err := ctx.ListDevices(func(desc *usb.Descriptor) bool {
 		if desc.Vendor == Vendor && desc.Product == Product &&
 			int(desc.Bus) == info.Bus() && int(desc.Address) == info.Address() &&
@@ -55,7 +62,7 @@ func Open(ctx *usb.Context, info DeviceInfo) (Device, error) {
 		return false
 	})
 	if err != nil {
-		return nil, err
+		return
 	}
 	if len(d) == 0 {
 		return nil, ErrDeviceNotFound
@@ -64,7 +71,8 @@ func Open(ctx *usb.Context, info DeviceInfo) (Device, error) {
 		return nil, ErrTooManyDevicesMatch
 	}
 
-	res := &device{d: d[0]}
+	ctxOwned = true
+	res := &device{ctx: ctx, d: d[0]}
 	if err = res.initDongle(DefaultChannel, DefaultDataRate); err != nil {
 		res.Close()
 		return nil, fmt.Errorf("Unable to init dongle: %v", err)
@@ -73,6 +81,7 @@ func Open(ctx *usb.Context, info DeviceInfo) (Device, error) {
 }
 
 type device struct {
+	ctx *usb.Context
 	d   *usb.Device
 	in  usb.Endpoint
 	out usb.Endpoint
@@ -87,7 +96,12 @@ func (d *device) Write(p []byte) (n int, err error) {
 }
 
 func (d *device) Close() error {
-	return d.d.Close()
+	err := d.d.Close()
+	err2 := d.ctx.Close()
+	if err != nil {
+		return err
+	}
+	return err2
 }
 
 func (d *device) control(req Request, val uint16, data []byte) error {
