@@ -2,7 +2,6 @@ package crazyradio
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/kylelemons/gousb/usb"
@@ -10,6 +9,18 @@ import (
 
 type Request uint8
 type DataRate uint16
+
+func (rate DataRate) String() string {
+	switch rate {
+	case DATA_RATE_250K:
+		return "250K"
+	case DATA_RATE_1M:
+		return "1M"
+	case DATA_RATE_2M:
+		return "2M"
+	}
+	return fmt.Sprintf("DataRate:#%d", rate)
+}
 
 const (
 	SET_RADIO_CHANNEL Request = 0x01
@@ -43,7 +54,7 @@ type Device interface {
 	Close() error
 	Read(p []byte) (n int, err error)
 	Write(p []byte) (n int, err error)
-	Scan()
+	Scan() (addr []string, err error)
 }
 
 // Open opens a CrazyRadio USB dongle
@@ -111,25 +122,47 @@ func (d *device) control(req Request, val uint16, data []byte) error {
 	return err
 }
 
-func (d *device) Scan() {
-	log.Printf("Let's send scan request")
-	d.d.ControlTimeout = 10 * time.Second
-	_, err := d.d.Control(usb.REQUEST_TYPE_VENDOR, uint8(CHANNEL_SCANN), 0, 125, []byte{0xFF})
+func (d *device) scanRate(rate DataRate) (addr []string, err error) {
+	err = d.setRate(rate)
 	if err != nil {
-		log.Printf("Scan error (send phase): %v", err)
-		//		return
+		return nil, fmt.Errorf("setRate: %v", err)
+	}
+	_, err = d.d.Control(usb.REQUEST_TYPE_VENDOR, uint8(CHANNEL_SCANN), 0, 125, []byte{0xFF})
+	if err != nil {
+		return nil, fmt.Errorf("Could not send scan request: %v", err)
 	}
 	buf := make([]byte, 64)
 	_, err = d.d.Control(usb.REQUEST_TYPE_VENDOR|0x80, uint8(CHANNEL_SCANN), 0, 0, buf)
 	if err != nil {
-		log.Printf("Scan error (recv phase): %v", err)
-		return
+		return nil, fmt.Errorf("Could not receive scan response: %v", err)
 	}
-	log.Printf("Scan results: %v", buf)
+	for _, ch := range buf {
+		if ch == 0 {
+			continue
+		}
+		addr = append(addr, fmt.Sprintf("radio://0/%d/%s", ch, rate))
+	}
+	return
+}
+
+func (d *device) Scan() (addr []string, err error) {
+	for _, rate := range []DataRate{DATA_RATE_250K, DATA_RATE_1M, DATA_RATE_2M} {
+		cur, err := d.scanRate(rate)
+		if err != nil {
+			return nil, err
+		}
+		addr = append(addr, cur...)
+	}
+	return
+}
+
+func (d *device) setRate(rate DataRate) error {
+	return d.control(SET_DATA_RATE, uint16(rate), nil)
 }
 
 func (d *device) initDongle(ch uint16, rate DataRate) (err error) {
 	d.d.ReadTimeout = 50 * time.Millisecond
+	d.d.ControlTimeout = 10 * time.Second // Scans are slow
 
 	d.in, err = d.d.OpenEndpoint(
 		/* config */ 1,
@@ -149,7 +182,7 @@ func (d *device) initDongle(ch uint16, rate DataRate) (err error) {
 		return fmt.Errorf("OpenEndpoint(OUT): %v", err)
 	}
 
-	if err = d.control(SET_DATA_RATE, uint16(DATA_RATE_250K), nil); err != nil {
+	if err = d.setRate(DATA_RATE_250K); err != nil {
 		return
 	}
 	if err = d.control(SET_RADIO_CHANNEL, 2, nil); err != nil {
@@ -176,7 +209,7 @@ func (d *device) initDongle(ch uint16, rate DataRate) (err error) {
 	if err = d.control(SET_RADIO_CHANNEL, ch, nil); err != nil {
 		return
 	}
-	if err = d.control(SET_DATA_RATE, uint16(rate), nil); err != nil {
+	if err = d.setRate(rate); err != nil {
 		return
 	}
 	return
