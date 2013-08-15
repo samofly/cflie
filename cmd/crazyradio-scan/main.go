@@ -8,18 +8,11 @@ import (
 )
 
 func main() {
-	list, err := crazyradio.ListDevices()
+	st, err := crazyradio.Start(nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(list) == 0 {
-		log.Fatal("No CrazyRadio dongles found")
-	}
-	dev, err := crazyradio.Open(list[0])
-	if err != nil {
-		log.Fatalf("Could not open device: %v", err)
-	}
-	addr, err := dev.Scan()
+	addr, err := st.Scan()
 	if err != nil {
 		log.Fatalf("Scan failed: %v", err)
 	}

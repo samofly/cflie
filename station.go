@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+const BlackListDuration = 5 * time.Second
+
+type Order interface {
+	Fail(err error)
+}
+
 type Station interface {
 	Scan() (addr []string, err error)
 }
@@ -14,13 +20,14 @@ func Start(hub Hub) (Station, error) {
 	if hub == nil {
 		hub = DefaultHub
 	}
-	st := &station{hub: hub}
+	st := &station{hub: hub, orders: make(chan Order)}
 	go st.run()
 	return st, nil
 }
 
 type station struct {
-	hub Hub
+	hub    Hub
+	orders chan Order
 }
 
 func (st *station) run() {
@@ -36,6 +43,7 @@ func (st *station) trackDongles(errChan chan<- error) {
 	first := true
 
 	opened := make(map[string]Device)
+	failed := make(map[string]time.Time)
 
 	for {
 		if !first {
@@ -55,13 +63,18 @@ func (st *station) trackDongles(errChan chan<- error) {
 			key := info.String()
 			found[key] = true
 			if _, ok := opened[key]; !ok {
+				if failTime, ok := failed[key]; ok && time.Now().Sub(failTime) < BlackListDuration {
+					continue
+				}
 				dev, err := st.hub.Open(info)
 				if err != nil {
 					// TODO: consider black-listing this device, at least, temporary
+					failed[key] = time.Now()
 					errChan <- err
 					continue
 				}
 				opened[key] = dev
+				go st.runDongle(dev)
 				log.Printf("Opened %s", key)
 			}
 		}
@@ -77,6 +90,65 @@ func (st *station) trackDongles(errChan chan<- error) {
 	}
 }
 
+func (st *station) runDongle(dev Device) {
+	for order := range st.orders {
+		log.Printf("runDongle, got order: %+v", order)
+		switch order.(type) {
+		case *scanChunkOrder:
+			cur := order.(*scanChunkOrder)
+			addr, err := dev.ScanChunk(cur.rate, cur.fromCh, cur.toCh)
+			if err != nil {
+				cur.respCh <- &scanChunkResp{err: err}
+				continue
+			}
+			log.Printf("runDongle, report result: %v", addr)
+			cur.respCh <- &scanChunkResp{addr: addr}
+		default:
+			order.Fail(fmt.Errorf("Unknown order type: %T", order))
+		}
+	}
+}
+
+type scanChunkOrder struct {
+	rate   DataRate
+	fromCh uint8
+	toCh   uint8
+	respCh chan *scanChunkResp
+}
+
+func (o *scanChunkOrder) Fail(err error) {
+	o.respCh <- &scanChunkResp{err: err}
+}
+
+type scanChunkResp struct {
+	err  error
+	addr []string
+}
+
 func (st *station) Scan() (addr []string, err error) {
-	return nil, fmt.Errorf("station.Scan not implemented")
+	respCh := make(chan *scanChunkResp, len(Rates))
+	var errors []error
+	for _, rate := range Rates {
+		order := &scanChunkOrder{
+			rate:   rate,
+			fromCh: 0,
+			toCh:   MaxChannel,
+			respCh: respCh,
+		}
+		log.Printf("Sending an order: %+v", order)
+		st.orders <- order
+	}
+	for _ = range Rates {
+		resp := <-respCh
+		if resp.err != nil {
+			errors = append(errors, resp.err)
+			continue
+		}
+		addr = append(addr, resp.addr...)
+	}
+	if errors != nil {
+		// Just return the first error
+		return nil, errors[0]
+	}
+	return
 }

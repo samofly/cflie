@@ -48,6 +48,8 @@ const (
 	DefaultDataRate = DATA_RATE_250K
 )
 
+var Rates = []DataRate{DATA_RATE_250K, DATA_RATE_1M, DATA_RATE_2M}
+
 var ErrDeviceNotFound = fmt.Errorf("Device not found")
 var ErrTooManyDevicesMatch = fmt.Errorf("Too many devices match (> 1)")
 
@@ -155,7 +157,7 @@ func (d *device) ScanChunk(rate DataRate, fromCh, toCh uint8) (addr []string, er
 }
 
 func (d *device) Scan() (addr []string, err error) {
-	for _, rate := range []DataRate{DATA_RATE_250K, DATA_RATE_1M, DATA_RATE_2M} {
+	for _, rate := range Rates {
 		cur, err := d.ScanChunk(rate, 0, MaxChannel)
 		if err != nil {
 			return nil, err
