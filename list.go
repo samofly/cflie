@@ -47,5 +47,5 @@ func (d deviceInfo) MajorVer() int { return int((d.desc.Device >> 8) & 0xFF) }
 func (d deviceInfo) MinorVer() int { return int(d.desc.Device & 0xFF) }
 func (d deviceInfo) String() string {
 	return fmt.Sprintf("CrazyRadio-Bus:%d-Address:%d-v%02x.%02x",
-		d.Bus(), d.Address(), d.MajorVer, d.MinorVer)
+		d.Bus(), d.Address(), d.MajorVer(), d.MinorVer())
 }
