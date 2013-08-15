@@ -1,11 +1,9 @@
-package station
+package crazyradio
 
 import (
 	"fmt"
 	"log"
 	"time"
-
-	"github.com/krasin/crazyradio"
 )
 
 type Station interface {
@@ -37,7 +35,7 @@ func (st *station) run() {
 func (st *station) trackDongles(errChan chan<- error) {
 	first := true
 
-	opened := make(map[string]crazyradio.Device)
+	opened := make(map[string]Device)
 
 	for {
 		if !first {

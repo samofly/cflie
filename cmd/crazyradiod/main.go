@@ -2,10 +2,10 @@
 package main
 
 import (
-	"github.com/krasin/crazyradio/station"
+	"github.com/krasin/crazyradio"
 )
 
 func main() {
-	station.Start(nil)
+	crazyradio.Start(nil)
 	select {}
 }
