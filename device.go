@@ -44,6 +44,7 @@ const (
 	RADIO_POWER_0dBm   = 3
 
 	DefaultChannel  = 10
+	MaxChannel      = 125
 	DefaultDataRate = DATA_RATE_250K
 )
 
@@ -55,6 +56,7 @@ type Device interface {
 	Read(p []byte) (n int, err error)
 	Write(p []byte) (n int, err error)
 	Scan() (addr []string, err error)
+	ScanChunk(rate DataRate, fromCh, toCh uint8) (addr []string, err error)
 }
 
 // Open opens a CrazyRadio USB dongle
@@ -122,12 +124,19 @@ func (d *device) control(req Request, val uint16, data []byte) error {
 	return err
 }
 
-func (d *device) scanRate(rate DataRate) (addr []string, err error) {
+// Scan Crazyflies at specified rate and in range [fromCh, toCh).
+func (d *device) ScanChunk(rate DataRate, fromCh, toCh uint8) (addr []string, err error) {
+	if fromCh >= toCh {
+		return nil, fmt.Errorf("%d = fromCh >= toCh = %d", fromCh, toCh)
+	}
+	if toCh > MaxChannel {
+		toCh = MaxChannel
+	}
 	err = d.setRate(rate)
 	if err != nil {
 		return nil, fmt.Errorf("setRate: %v", err)
 	}
-	_, err = d.d.Control(usb.REQUEST_TYPE_VENDOR, uint8(CHANNEL_SCANN), 0, 125, []byte{0xFF})
+	_, err = d.d.Control(usb.REQUEST_TYPE_VENDOR, uint8(CHANNEL_SCANN), uint16(fromCh), uint16(toCh), []byte{0xFF})
 	if err != nil {
 		return nil, fmt.Errorf("Could not send scan request: %v", err)
 	}
@@ -147,7 +156,7 @@ func (d *device) scanRate(rate DataRate) (addr []string, err error) {
 
 func (d *device) Scan() (addr []string, err error) {
 	for _, rate := range []DataRate{DATA_RATE_250K, DATA_RATE_1M, DATA_RATE_2M} {
-		cur, err := d.scanRate(rate)
+		cur, err := d.ScanChunk(rate, 0, MaxChannel)
 		if err != nil {
 			return nil, err
 		}
