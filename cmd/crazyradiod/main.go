@@ -6,5 +6,6 @@ import (
 )
 
 func main() {
-	station.Run(nil)
+	station.Start(nil)
+	select {}
 }

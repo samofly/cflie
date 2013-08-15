@@ -1,25 +1,31 @@
 package station
 
 import (
+	"fmt"
 	"log"
 	"time"
 
 	"github.com/krasin/crazyradio"
 )
 
-func Run(hub Hub) error {
+type Station interface {
+	Scan() (addr []string, err error)
+}
+
+func Start(hub Hub) (Station, error) {
 	if hub == nil {
 		hub = DefaultHub
 	}
 	st := &station{hub: hub}
-	return st.run()
+	go st.run()
+	return st, nil
 }
 
 type station struct {
 	hub Hub
 }
 
-func (st *station) run() error {
+func (st *station) run() {
 	dongleErrChan := make(chan error, 10)
 	go st.trackDongles(dongleErrChan)
 	for {
@@ -71,4 +77,8 @@ func (st *station) trackDongles(errChan chan<- error) {
 			}
 		}
 	}
+}
+
+func (st *station) Scan() (addr []string, err error) {
+	return nil, fmt.Errorf("station.Scan not implemented")
 }
