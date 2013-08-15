@@ -2,6 +2,7 @@ package crazyradio
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/kylelemons/gousb/usb"
@@ -42,6 +43,7 @@ type Device interface {
 	Close() error
 	Read(p []byte) (n int, err error)
 	Write(p []byte) (n int, err error)
+	Scan()
 }
 
 // Open opens a CrazyRadio USB dongle
@@ -107,6 +109,23 @@ func (d *device) Close() error {
 func (d *device) control(req Request, val uint16, data []byte) error {
 	_, err := d.d.Control(usb.REQUEST_TYPE_VENDOR, uint8(req), val, 0, data)
 	return err
+}
+
+func (d *device) Scan() {
+	log.Printf("Let's send scan request")
+	d.d.ControlTimeout = 10 * time.Second
+	_, err := d.d.Control(usb.REQUEST_TYPE_VENDOR, uint8(CHANNEL_SCANN), 0, 125, []byte{0xFF})
+	if err != nil {
+		log.Printf("Scan error (send phase): %v", err)
+		//		return
+	}
+	buf := make([]byte, 64)
+	_, err = d.d.Control(usb.REQUEST_TYPE_VENDOR|0x80, uint8(CHANNEL_SCANN), 0, 0, buf)
+	if err != nil {
+		log.Printf("Scan error (recv phase): %v", err)
+		return
+	}
+	log.Printf("Scan results: %v", buf)
 }
 
 func (d *device) initDongle(ch uint16, rate DataRate) (err error) {
