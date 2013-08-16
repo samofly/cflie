@@ -10,6 +10,8 @@ import (
 type Request uint8
 type DataRate uint16
 
+var defaultContext = usb.NewContext()
+
 func (rate DataRate) String() string {
 	switch rate {
 	case DATA_RATE_250K:
@@ -63,14 +65,7 @@ type Device interface {
 
 // Open opens a CrazyRadio USB dongle
 func Open(info DeviceInfo) (dev Device, err error) {
-	ctx := usb.NewContext()
-	ctxOwned := false
-	defer func() {
-		if !ctxOwned {
-			ctx.Close()
-		}
-	}()
-	d, err := ctx.ListDevices(func(desc *usb.Descriptor) bool {
+	d, err := defaultContext.ListDevices(func(desc *usb.Descriptor) bool {
 		if desc.Vendor == Vendor && desc.Product == Product &&
 			int(desc.Bus) == info.Bus() && int(desc.Address) == info.Address() &&
 			uint16(desc.Device) == uint16(((info.MajorVer()&0xFF)<<8)+(info.MinorVer()&0xFF)) {
@@ -88,8 +83,7 @@ func Open(info DeviceInfo) (dev Device, err error) {
 		return nil, ErrTooManyDevicesMatch
 	}
 
-	ctxOwned = true
-	res := &device{ctx: ctx, d: d[0]}
+	res := &device{d: d[0]}
 	if err = res.initDongle(DefaultChannel, DefaultDataRate); err != nil {
 		res.Close()
 		return nil, fmt.Errorf("Unable to init dongle: %v", err)
@@ -98,7 +92,6 @@ func Open(info DeviceInfo) (dev Device, err error) {
 }
 
 type device struct {
-	ctx *usb.Context
 	d   *usb.Device
 	in  usb.Endpoint
 	out usb.Endpoint
@@ -113,12 +106,7 @@ func (d *device) Write(p []byte) (n int, err error) {
 }
 
 func (d *device) Close() error {
-	err := d.d.Close()
-	err2 := d.ctx.Close()
-	if err != nil {
-		return err
-	}
-	return err2
+	return d.d.Close()
 }
 
 func (d *device) control(req Request, val uint16, data []byte) error {
