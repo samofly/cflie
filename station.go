@@ -51,22 +51,18 @@ func (st *station) run() {
 
 func (st *station) trackDongles(errChan chan<- error) {
 	first := true
-	log.Printf("trackDongles started")
 	for {
 		if !first {
 			time.Sleep(time.Second)
 		}
 		first = false
 		// Get the list of CrazyRadio dongles
-		log.Printf("trackDongles: let's take a list of dongles...")
 		list, err := st.hub.List()
 		if err != nil {
 			errChan <- err
 			continue
 		}
-		log.Printf("trackDongles, list: %v", list)
 		st.lsChan <- list
-		log.Printf("trackDongles, list send to lsChan")
 	}
 }
 

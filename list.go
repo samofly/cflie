@@ -2,7 +2,6 @@ package crazyradio
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/kylelemons/gousb/usb"
 )
@@ -22,10 +21,6 @@ type DeviceInfo interface {
 
 // ListDevices returns the list of attached CrazyRadio devices.
 func ListDevices() ([]DeviceInfo, error) {
-	log.Printf("ListDevices")
-	defer log.Printf("End of ListDevices")
-
-	log.Printf("ListDevices, 10")
 	var d []DeviceInfo
 	_, err := defaultContext.ListDevices(func(desc *usb.Descriptor) bool {
 		if desc.Vendor == Vendor && desc.Product == Product {
