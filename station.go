@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+type Hub interface {
+	List() ([]DeviceInfo, error)
+	Open(info DeviceInfo) (dev Device, err error)
+}
+
 const BlackListDuration = 5 * time.Second
 
 type Order interface {
@@ -18,7 +23,7 @@ type Station interface {
 
 func Start(hub Hub) (Station, error) {
 	if hub == nil {
-		hub = DefaultHub
+		panic("hub == nil")
 	}
 	st := &station{hub: hub,
 		ordersChan: make(chan Order),

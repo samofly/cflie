@@ -1,28 +1,14 @@
-package crazyradio
+package usb
 
 import (
 	"fmt"
 	"time"
 
+	"github.com/krasin/crazyradio"
 	"github.com/kylelemons/gousb/usb"
 )
 
 type Request uint8
-type DataRate uint16
-
-var defaultContext = usb.NewContext()
-
-func (rate DataRate) String() string {
-	switch rate {
-	case DATA_RATE_250K:
-		return "250K"
-	case DATA_RATE_1M:
-		return "1M"
-	case DATA_RATE_2M:
-		return "2M"
-	}
-	return fmt.Sprintf("DataRate:#%d", rate)
-}
 
 const (
 	SET_RADIO_CHANNEL Request = 0x01
@@ -36,35 +22,22 @@ const (
 	CHANNEL_SCANN     Request = 0x21
 	LAUNCH_BOOTLOADER Request = 0xFF
 
-	DATA_RATE_250K DataRate = 0
-	DATA_RATE_1M   DataRate = 1
-	DATA_RATE_2M   DataRate = 2
-
 	RADIO_POWER_M18dBm = 0
 	RADIO_POWER_M12dBm = 1
 	RADIO_POWER_M6dBm  = 2
 	RADIO_POWER_0dBm   = 3
 
 	DefaultChannel  = 10
-	MaxChannel      = 125
-	DefaultDataRate = DATA_RATE_250K
+	DefaultDataRate = crazyradio.DATA_RATE_250K
 )
 
-var Rates = []DataRate{DATA_RATE_250K, DATA_RATE_1M, DATA_RATE_2M}
+var defaultContext = usb.NewContext()
 
 var ErrDeviceNotFound = fmt.Errorf("Device not found")
 var ErrTooManyDevicesMatch = fmt.Errorf("Too many devices match (> 1)")
 
-type Device interface {
-	Close() error
-	Read(p []byte) (n int, err error)
-	Write(p []byte) (n int, err error)
-	Scan() (addr []string, err error)
-	ScanChunk(rate DataRate, fromCh, toCh uint8) (addr []string, err error)
-}
-
 // Open opens a CrazyRadio USB dongle
-func Open(info DeviceInfo) (dev Device, err error) {
+func Open(info crazyradio.DeviceInfo) (dev crazyradio.Device, err error) {
 	d, err := defaultContext.ListDevices(func(desc *usb.Descriptor) bool {
 		if desc.Vendor == Vendor && desc.Product == Product &&
 			int(desc.Bus) == info.Bus() && int(desc.Address) == info.Address() &&
@@ -115,12 +88,12 @@ func (d *device) control(req Request, val uint16, data []byte) error {
 }
 
 // Scan Crazyflies at specified rate and in range [fromCh, toCh).
-func (d *device) ScanChunk(rate DataRate, fromCh, toCh uint8) (addr []string, err error) {
+func (d *device) ScanChunk(rate crazyradio.DataRate, fromCh, toCh uint8) (addr []string, err error) {
 	if fromCh >= toCh {
 		return nil, fmt.Errorf("%d = fromCh >= toCh = %d", fromCh, toCh)
 	}
-	if toCh > MaxChannel {
-		toCh = MaxChannel
+	if toCh > crazyradio.MaxChannel {
+		toCh = crazyradio.MaxChannel
 	}
 	err = d.setRate(rate)
 	if err != nil {
@@ -139,14 +112,14 @@ func (d *device) ScanChunk(rate DataRate, fromCh, toCh uint8) (addr []string, er
 		if ch == 0 {
 			continue
 		}
-		addr = append(addr, fmt.Sprintf("radio://0/%d/%s", ch, rate))
+		addr = append(addr, crazyradio.RadioAddr(ch, rate))
 	}
 	return
 }
 
 func (d *device) Scan() (addr []string, err error) {
-	for _, rate := range Rates {
-		cur, err := d.ScanChunk(rate, 0, MaxChannel)
+	for _, rate := range crazyradio.Rates {
+		cur, err := d.ScanChunk(rate, 0, crazyradio.MaxChannel)
 		if err != nil {
 			return nil, err
 		}
@@ -155,11 +128,11 @@ func (d *device) Scan() (addr []string, err error) {
 	return
 }
 
-func (d *device) setRate(rate DataRate) error {
+func (d *device) setRate(rate crazyradio.DataRate) error {
 	return d.control(SET_DATA_RATE, uint16(rate), nil)
 }
 
-func (d *device) initDongle(ch uint16, rate DataRate) (err error) {
+func (d *device) initDongle(ch uint16, rate crazyradio.DataRate) (err error) {
 	d.d.ReadTimeout = 50 * time.Millisecond
 	d.d.ControlTimeout = 10 * time.Second // Scans are slow
 
@@ -181,7 +154,7 @@ func (d *device) initDongle(ch uint16, rate DataRate) (err error) {
 		return fmt.Errorf("OpenEndpoint(OUT): %v", err)
 	}
 
-	if err = d.setRate(DATA_RATE_250K); err != nil {
+	if err = d.setRate(crazyradio.DATA_RATE_250K); err != nil {
 		return
 	}
 	if err = d.control(SET_RADIO_CHANNEL, 2, nil); err != nil {

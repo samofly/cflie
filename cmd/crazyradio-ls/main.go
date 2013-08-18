@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/krasin/crazyradio"
+	"github.com/krasin/crazyradio/usb"
 )
 
 func main() {
-	list, err := crazyradio.ListDevices()
+	list, err := usb.ListDevices()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ListDevices: %v\n", err)
 		os.Exit(1)

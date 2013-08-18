@@ -1,8 +1,9 @@
-package crazyradio
+package usb
 
 import (
 	"fmt"
 
+	"github.com/krasin/crazyradio"
 	"github.com/kylelemons/gousb/usb"
 )
 
@@ -11,17 +12,9 @@ const (
 	Product = 0x7777
 )
 
-type DeviceInfo interface {
-	Bus() int
-	Address() int
-	MajorVer() int
-	MinorVer() int
-	String() string
-}
-
 // ListDevices returns the list of attached CrazyRadio devices.
-func ListDevices() ([]DeviceInfo, error) {
-	var d []DeviceInfo
+func ListDevices() ([]crazyradio.DeviceInfo, error) {
+	var d []crazyradio.DeviceInfo
 	_, err := defaultContext.ListDevices(func(desc *usb.Descriptor) bool {
 		if desc.Vendor == Vendor && desc.Product == Product {
 			d = append(d, deviceInfo{*desc})
