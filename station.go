@@ -230,10 +230,10 @@ func doOpenEndpoint(dev Device, order *openEndpointOrder) {
 
 	for {
 		var p []byte
-		var closed bool
+		var ok bool
 		select {
-		case p, closed = <-sendChan:
-			if closed {
+		case p, ok = <-sendChan:
+			if !ok {
 				close(recvChan)
 				return
 			}
@@ -334,8 +334,8 @@ func (d *endpoint) Write(p []byte) (n int, err error) {
 
 // Note: this is not a fair Read. It will return an error if an incoming package would be larger than the buffer.
 func (d *endpoint) Read(p []byte) (n int, err error) {
-	pp, closed := <-d.recvChan
-	if closed {
+	pp, ok := <-d.recvChan
+	if !ok {
 		return 0, io.EOF
 	}
 	if len(pp) > len(p) {
@@ -382,8 +382,8 @@ func (st *station) Open(addr string) (ep Endpoint, err error) {
 		ch:       ch,
 		respChan: respChan,
 	}
-	resp, closed := <-respChan
-	if closed {
+	resp, ok := <-respChan
+	if !ok {
 		return nil, io.EOF
 	}
 	if resp.err != nil {
