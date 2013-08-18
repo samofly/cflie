@@ -8,7 +8,7 @@ import (
 )
 
 type Hub interface {
-	List() ([]DeviceInfo, error)
+	ListPush(cancelChan <-chan bool, errChan chan<- error) <-chan []DeviceInfo
 	Open(info DeviceInfo) (dev Device, err error)
 }
 
@@ -36,7 +36,6 @@ func Start(hub Hub) (Station, error) {
 	}
 	st := &station{hub: hub,
 		ordersChan: make(chan Order),
-		lsChan:     make(chan []DeviceInfo, 1),
 	}
 	go st.run()
 	return st, nil
@@ -44,14 +43,15 @@ func Start(hub Hub) (Station, error) {
 
 type station struct {
 	hub        Hub
-	lsChan     chan []DeviceInfo
+	lsChan     <-chan []DeviceInfo
 	ordersChan chan Order
 	s          *scheduler
 }
 
 func (st *station) run() {
 	dongleErrChan := make(chan error, 10)
-	go st.trackDongles(dongleErrChan)
+	cancelTrackChan := make(chan bool)
+	st.lsChan = st.hub.ListPush(cancelTrackChan, dongleErrChan)
 	scheduleErrChan := make(chan error, 10)
 	st.s = newScheduler(st.hub, st.lsChan, st.ordersChan, scheduleErrChan)
 	go st.s.run()
@@ -65,29 +65,9 @@ func (st *station) run() {
 	}
 }
 
-func (st *station) trackDongles(errChan chan<- error) {
-	first := true
-	for {
-		if !first {
-			log.Printf("Let's go to sleep")
-			time.Sleep(time.Second)
-			log.Printf("Wake up!")
-		}
-		first = false
-		// Get the list of CrazyRadio dongles
-		list, err := st.hub.List()
-		if err != nil {
-			errChan <- err
-			continue
-		}
-		log.Printf("trackDongles: %v", list)
-		st.lsChan <- list
-	}
-}
-
 type scheduler struct {
 	hub           Hub
-	lsChan        chan []DeviceInfo
+	lsChan        <-chan []DeviceInfo
 	ordersChan    chan Order
 	errChan       chan<- error
 	opened        map[string]Device
@@ -98,7 +78,7 @@ type scheduler struct {
 	pendingOrders []Order
 }
 
-func newScheduler(hub Hub, lsChan chan []DeviceInfo, ordersChan chan Order, errChan chan<- error) *scheduler {
+func newScheduler(hub Hub, lsChan <-chan []DeviceInfo, ordersChan chan Order, errChan chan<- error) *scheduler {
 	return &scheduler{
 		hub:         hub,
 		lsChan:      lsChan,

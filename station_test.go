@@ -11,8 +11,15 @@ type testHub struct {
 	info *testDeviceInfo
 }
 
-func (h *testHub) List() (dev []DeviceInfo, err error) {
-	return []DeviceInfo{h.info}, nil
+func (h *testHub) ListPush(cancelChan <-chan bool, errChan chan<- error) <-chan []DeviceInfo {
+	lsChan := make(chan []DeviceInfo)
+	go func() {
+		lsChan <- []DeviceInfo{h.info}
+		<-cancelChan
+		close(lsChan)
+		close(errChan)
+	}()
+	return lsChan
 }
 
 func (h *testHub) Open(info DeviceInfo) (dev Device, err error) {
