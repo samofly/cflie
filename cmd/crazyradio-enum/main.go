@@ -30,9 +30,10 @@ func main() {
 		fail("No Crazyflies found\n")
 	}
 
-	flie, err := st.Open(addr[0])
+	flieAddr := addr[0]
+	flie, err := st.Open(flieAddr)
 	if err != nil {
-		fail("Unable to connect to [%s]: %v\n", addr, err)
+		fail("Unable to connect to [%s]: %v\n", flieAddr, err)
 	}
 
 	flie.Write([]byte{60, 0, 0, 0, 0, 0, 0, 0, 128, 250, 117, 61, 64, 48, 117})
