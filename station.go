@@ -2,6 +2,7 @@ package crazyradio
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"time"
 )
@@ -13,14 +14,18 @@ type Hub interface {
 
 const BlackListDuration = 5 * time.Second
 const scanChunkTimeout = 10 * time.Second
+const openEndpointDeadline = 5 * time.Second
 
 type Order interface {
 	Deadline() time.Time
 	Fail(err error)
 }
 
+type Endpoint io.ReadWriteCloser
+
 type Station interface {
 	Scan() (addr []string, err error)
+	Open(addr string) (e Endpoint, err error)
 }
 
 func Start(hub Hub) (Station, error) {
@@ -279,4 +284,73 @@ func (st *station) Scan() (addr []string, err error) {
 		return nil, errors[0]
 	}
 	return
+}
+
+type endpoint struct {
+	sendChan chan<- []byte
+	recvChan <-chan []byte
+}
+
+func (d *endpoint) Write(p []byte) (n int, err error) {
+	d.sendChan <- p
+	return len(p), nil
+}
+
+// Note: this is not a fair Read. It will return an error if an incoming package would be larger than the buffer.
+func (d *endpoint) Read(p []byte) (n int, err error) {
+	pp, closed := <-d.recvChan
+	if closed {
+		return 0, io.EOF
+	}
+	if len(pp) > len(p) {
+		return 0, fmt.Errorf("Packet size (%d bytes) is larger than buffer (%d bytes)", len(pp), len(p))
+	}
+	return copy(p, pp), nil
+}
+
+func (d *endpoint) Close() error {
+	close(d.sendChan)
+	return nil
+}
+
+type openEndpointOrder struct {
+	deadline time.Time
+	rate     DataRate
+	ch       uint8
+	respChan chan *openEndpointResp
+}
+
+func (o *openEndpointOrder) Deadline() time.Time {
+	return o.deadline
+}
+
+func (o *openEndpointOrder) Fail(err error) {
+	o.respChan <- &openEndpointResp{err: err}
+}
+
+type openEndpointResp struct {
+	err error
+	ep  *endpoint
+}
+
+func (st *station) Open(addr string) (ep Endpoint, err error) {
+	rate, ch, err := ParseAddr(addr)
+	if err != nil {
+		return
+	}
+	respChan := make(chan *openEndpointResp, 1)
+	st.ordersChan <- &openEndpointOrder{
+		deadline: time.Now().Add(openEndpointDeadline),
+		rate:     rate,
+		ch:       ch,
+		respChan: respChan,
+	}
+	resp, closed := <-respChan
+	if closed {
+		return nil, io.EOF
+	}
+	if resp.err != nil {
+		return nil, resp.err
+	}
+	return resp.ep, nil
 }

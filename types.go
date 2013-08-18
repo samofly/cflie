@@ -42,6 +42,25 @@ type Device interface {
 	ScanChunk(rate DataRate, fromCh, toCh uint8) (addr []string, err error)
 }
 
-func RadioAddr(ch uint8, rate DataRate) string {
+func RadioAddr(rate DataRate, ch uint8) string {
 	return fmt.Sprintf("radio://0/%d/%s", ch, rate)
+}
+
+func ParseAddr(addr string) (rate DataRate, ch uint8, err error) {
+	var label string
+	_, err = fmt.Sscanf(addr, "radio://0/%d/%s", &ch, &label)
+	if err != nil {
+		return 0, 0, err
+	}
+	switch label {
+	case "250K":
+		rate = DATA_RATE_250K
+	case "1M":
+		rate = DATA_RATE_1M
+	case "2M":
+		rate = DATA_RATE_2M
+	default:
+		return 0, 0, fmt.Errorf("Unknown rate: %s", label)
+	}
+	return
 }

@@ -112,7 +112,7 @@ func (d *device) ScanChunk(rate crazyradio.DataRate, fromCh, toCh uint8) (addr [
 		if ch == 0 {
 			continue
 		}
-		addr = append(addr, crazyradio.RadioAddr(ch, rate))
+		addr = append(addr, crazyradio.RadioAddr(rate, ch))
 	}
 	return
 }
