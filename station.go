@@ -114,6 +114,8 @@ func (s *scheduler) run() {
 			s.markReady(key)
 		case order := <-s.ordersChan:
 			s.pendingOrders = append(s.pendingOrders, order)
+		case <-time.After(time.Second):
+			// To make sure that timed-out orders are marked as failed
 		}
 		s.processPendingOrders()
 	}
