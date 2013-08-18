@@ -5,10 +5,11 @@ import (
 	"log"
 
 	"github.com/krasin/crazyradio"
+	"github.com/krasin/crazyradio/usb"
 )
 
 func main() {
-	st, err := crazyradio.Start(nil)
+	st, err := crazyradio.Start(usb.Hub)
 	if err != nil {
 		log.Fatal(err)
 	}
