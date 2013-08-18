@@ -265,7 +265,7 @@ func doOpenEndpoint(dev Device, order *openEndpointOrder) {
 func runDongle(key string, dev Device, ordersChan chan Order, readyChan chan string) {
 	log.Printf("runDongle, 0")
 	for order := range ordersChan {
-		log.Printf("runDongle, got order: %+v", order)
+		log.Printf("runDongle, got order: %T %v", order, order)
 		processDongleOrder(dev, order)
 		readyChan <- key
 	}
