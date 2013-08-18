@@ -62,6 +62,8 @@ func (d *testDevice) ScanChunk(rate DataRate, fromCh, toCh uint8) (addr []string
 	return
 }
 
+func (d *testDevice) SetRateAndChannel(rate DataRate, ch uint8) error { return nil }
+
 func TestScan(t *testing.T) {
 	info := &testDeviceInfo{dev: &testDevice{}}
 	hub := &testHub{info: info}

@@ -40,6 +40,7 @@ type Device interface {
 	Write(p []byte) (n int, err error)
 	Scan() (addr []string, err error)
 	ScanChunk(rate DataRate, fromCh, toCh uint8) (addr []string, err error)
+	SetRateAndChannel(rate DataRate, ch uint8) error
 }
 
 func RadioAddr(rate DataRate, ch uint8) string {

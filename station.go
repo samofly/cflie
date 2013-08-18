@@ -16,6 +16,8 @@ const BlackListDuration = 5 * time.Second
 const scanChunkTimeout = 10 * time.Second
 const openEndpointDeadline = 5 * time.Second
 
+var emptyPacket = []byte{0xFF}
+
 type Order interface {
 	Deadline() time.Time
 	Fail(err error)
@@ -220,10 +222,64 @@ func processDongleOrder(dev Device, order Order) {
 		}
 		log.Printf("runDongle, report result: %v", addr)
 		cur.respCh <- &scanChunkResp{addr: addr}
+	case *openEndpointOrder:
+		cur := order.(*openEndpointOrder)
+		doOpenEndpoint(dev, cur)
 	default:
 		order.Fail(fmt.Errorf("Unknown order type: %T", order))
 	}
 
+}
+
+func doOpenEndpoint(dev Device, order *openEndpointOrder) {
+	err := dev.SetRateAndChannel(order.rate, order.ch)
+	if err != nil {
+		order.Fail(err)
+		return
+	}
+	recvChan := make(chan []byte)
+	sendChan := make(chan []byte)
+	order.respChan <- &openEndpointResp{
+		ep: &endpoint{
+			recvChan: recvChan,
+			sendChan: sendChan,
+		},
+	}
+
+	buf := make([]byte, 64)
+
+	for {
+		var p []byte
+		var closed bool
+		select {
+		case p, closed = <-sendChan:
+			if closed {
+				close(recvChan)
+				return
+			}
+		default:
+			p = emptyPacket
+		}
+		_, err = dev.Write(p)
+		if err != nil {
+			// TODO: send error to somewhere
+			log.Printf("Unable to write to device: %v", err)
+		}
+
+		// Read reply
+		n, err := dev.Read(buf)
+		if err != nil {
+			log.Printf("Error: reader: %v", err)
+			continue
+		}
+		p = make([]byte, n)
+		copy(p, buf)
+		// Cut off the ACK byte
+		if len(p) >= 1 {
+			p = p[1:]
+		}
+		recvChan <- p
+	}
 }
 
 func runDongle(key string, dev Device, ordersChan chan Order, readyChan chan string) {
@@ -310,6 +366,7 @@ func (d *endpoint) Read(p []byte) (n int, err error) {
 
 func (d *endpoint) Close() error {
 	close(d.sendChan)
+	<-d.recvChan
 	return nil
 }
 

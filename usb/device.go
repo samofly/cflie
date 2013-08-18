@@ -82,6 +82,16 @@ func (d *device) Close() error {
 	return d.d.Close()
 }
 
+func (d *device) SetRateAndChannel(rate crazyradio.DataRate, ch uint8) (err error) {
+	if err = d.setRate(rate); err != nil {
+		return
+	}
+	if err = d.setChannel(ch); err != nil {
+		return
+	}
+	return
+}
+
 func (d *device) control(req Request, val uint16, data []byte) error {
 	_, err := d.d.Control(usb.REQUEST_TYPE_VENDOR, uint8(req), val, 0, data)
 	return err
@@ -132,7 +142,11 @@ func (d *device) setRate(rate crazyradio.DataRate) error {
 	return d.control(SET_DATA_RATE, uint16(rate), nil)
 }
 
-func (d *device) initDongle(ch uint16, rate crazyradio.DataRate) (err error) {
+func (d *device) setChannel(ch uint8) error {
+	return d.control(SET_RADIO_CHANNEL, uint16(ch), nil)
+}
+
+func (d *device) initDongle(ch uint8, rate crazyradio.DataRate) (err error) {
 	d.d.ReadTimeout = 50 * time.Millisecond
 	d.d.ControlTimeout = 10 * time.Second // Scans are slow
 
@@ -157,7 +171,7 @@ func (d *device) initDongle(ch uint16, rate crazyradio.DataRate) (err error) {
 	if err = d.setRate(crazyradio.DATA_RATE_250K); err != nil {
 		return
 	}
-	if err = d.control(SET_RADIO_CHANNEL, 2, nil); err != nil {
+	if err = d.setChannel(2); err != nil {
 		return
 	}
 	if err = d.control(SET_CONT_CARRIER, 0, nil); err != nil {
@@ -178,7 +192,7 @@ func (d *device) initDongle(ch uint16, rate crazyradio.DataRate) (err error) {
 	if err = d.control(SET_RADIO_ARC, 10, nil); err != nil {
 		return
 	}
-	if err = d.control(SET_RADIO_CHANNEL, ch, nil); err != nil {
+	if err = d.setChannel(ch); err != nil {
 		return
 	}
 	if err = d.setRate(rate); err != nil {
