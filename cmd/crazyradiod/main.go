@@ -2,7 +2,7 @@
 package main
 
 import (
-	"github.com/krasin/crazyradio"
+	"github.com/samofly/crazyradio"
 )
 
 func main() {

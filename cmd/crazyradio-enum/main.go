@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/krasin/crazyradio"
-	"github.com/krasin/crazyradio/usb"
+	"github.com/samofly/crazyradio"
+	"github.com/samofly/crazyradio/usb"
 )
 
 func fail(format string, args ...interface{}) {

@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/krasin/crazyradio"
+	"github.com/samofly/crazyradio"
 )
 
 var Hub = &hub{}

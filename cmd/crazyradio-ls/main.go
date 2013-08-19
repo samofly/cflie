@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/krasin/crazyradio/usb"
+	"github.com/samofly/crazyradio/usb"
 )
 
 func main() {

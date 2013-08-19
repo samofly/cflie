@@ -4,8 +4,8 @@ package main
 import (
 	"log"
 
-	"github.com/krasin/crazyradio"
-	"github.com/krasin/crazyradio/usb"
+	"github.com/samofly/crazyradio"
+	"github.com/samofly/crazyradio/usb"
 )
 
 func main() {

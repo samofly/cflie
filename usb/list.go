@@ -3,7 +3,7 @@ package usb
 import (
 	"fmt"
 
-	"github.com/krasin/crazyradio"
+	"github.com/samofly/crazyradio"
 	"github.com/kylelemons/gousb/usb"
 )
 
