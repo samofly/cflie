@@ -23,11 +23,14 @@ type Order interface {
 	Fail(err error)
 }
 
-type Endpoint io.ReadWriteCloser
+type Endpoint struct {
+	RecvChan <-chan []byte
+	SendChan chan<- []byte
+}
 
 type Station interface {
 	Scan() (addr []string, err error)
-	Open(addr string) (e Endpoint, err error)
+	Open(addr string) (ep *Endpoint, err error)
 }
 
 func Start(hub Hub) (Station, error) {
@@ -220,9 +223,9 @@ func doOpenEndpoint(dev Device, order *openEndpointOrder) {
 	recvChan := make(chan []byte)
 	sendChan := make(chan []byte)
 	order.respChan <- &openEndpointResp{
-		ep: &endpoint{
-			recvChan: recvChan,
-			sendChan: sendChan,
+		ep: &Endpoint{
+			RecvChan: recvChan,
+			SendChan: sendChan,
 		},
 	}
 
@@ -327,34 +330,6 @@ func (st *station) Scan() (addr []string, err error) {
 	return
 }
 
-type endpoint struct {
-	sendChan chan<- []byte
-	recvChan <-chan []byte
-}
-
-func (d *endpoint) Write(p []byte) (n int, err error) {
-	d.sendChan <- p
-	return len(p), nil
-}
-
-// Note: this is not a fair Read. It will return an error if an incoming package would be larger than the buffer.
-func (d *endpoint) Read(p []byte) (n int, err error) {
-	pp, ok := <-d.recvChan
-	if !ok {
-		return 0, io.EOF
-	}
-	if len(pp) > len(p) {
-		return 0, fmt.Errorf("Packet size (%d bytes) is larger than buffer (%d bytes)", len(pp), len(p))
-	}
-	return copy(p, pp), nil
-}
-
-func (d *endpoint) Close() error {
-	close(d.sendChan)
-	<-d.recvChan
-	return nil
-}
-
 type openEndpointOrder struct {
 	deadline time.Time
 	rate     DataRate
@@ -372,10 +347,10 @@ func (o *openEndpointOrder) Fail(err error) {
 
 type openEndpointResp struct {
 	err error
-	ep  *endpoint
+	ep  *Endpoint
 }
 
-func (st *station) Open(addr string) (ep Endpoint, err error) {
+func (st *station) Open(addr string) (ep *Endpoint, err error) {
 	rate, ch, err := ParseAddr(addr)
 	if err != nil {
 		return
