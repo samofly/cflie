@@ -258,7 +258,12 @@ func doOpenEndpoint(dev Device, order *openEndpointOrder) {
 		if len(p) >= 1 {
 			p = p[1:]
 		}
-		recvChan <- p
+
+		// If there's no receiver, just drop the packet.
+		select {
+		case recvChan <- p:
+		default:
+		}
 	}
 }
 
