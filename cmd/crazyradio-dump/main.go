@@ -15,26 +15,24 @@ var full = flag.Bool("full", false, "Download full memory: image + config")
 func main() {
 	flag.Parse()
 
-	var conf boot.Config
-
 	log.Printf("Connecting to bootloader, please, restart Crazyflie...")
-	dev, conf, err := boot.Cold()
+	dev, info, err := boot.Cold()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer dev.Close()
 	log.Printf("Connected to bootloader")
-	log.Printf("Config: %+v", conf)
+	log.Printf("Info: %+v", info)
 
 	log.Printf("Downloading the contents of Crazyflie Flash memory...")
 	var fromPage, toPage int
 	if *full {
-		toPage = conf.FlashPages
+		toPage = info.FlashPages
 	} else {
-		fromPage = conf.FlashStart
+		fromPage = info.FlashStart
 		toPage = boot.ConfigPageIndex
 	}
-	mem, err := boot.Dump(dev, conf, fromPage, toPage)
+	mem, err := boot.Dump(dev, info, fromPage, toPage)
 	if err != nil {
 		log.Fatal(err)
 	}

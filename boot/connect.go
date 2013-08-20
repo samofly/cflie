@@ -21,12 +21,12 @@ const (
 
 	PageSize = 1024
 
-	ConfigPageIndex = 117
+	ConfigPageIndex = 127
 
 	CpuIdLen = 12
 )
 
-type config struct {
+type wireInfo struct {
 	PageSize    uint16
 	BufferPages uint16
 	FlashPages  uint16
@@ -35,7 +35,7 @@ type config struct {
 	Version     byte
 }
 
-type Config struct {
+type Info struct {
 	PageSize    int
 	BufferPages int
 	FlashPages  int
@@ -45,7 +45,7 @@ type Config struct {
 }
 
 // Cold waits for a Crazyflie startup and connects to its bootloader.
-func Cold() (dev crazyradio.Device, conf Config, err error) {
+func Cold() (dev crazyradio.Device, info Info, err error) {
 	buf := make([]byte, 128)
 	dev, err = usb.OpenAny()
 	if err != nil {
@@ -75,27 +75,27 @@ func Cold() (dev crazyradio.Device, conf Config, err error) {
 		if n < 4 || buf[3] != CMD_GET_INFO {
 			continue
 		}
-		// Try to parse config
-		var wc config
-		err = binary.Read(bytes.NewBuffer(buf[4:n]), binary.LittleEndian, &wc)
+		// Try to parse info
+		var wi wireInfo
+		err = binary.Read(bytes.NewBuffer(buf[4:n]), binary.LittleEndian, &wi)
 		if err != nil {
 			continue
 		}
-		conf = Config{
-			PageSize:    int(wc.PageSize),
-			BufferPages: int(wc.BufferPages),
-			FlashPages:  int(wc.FlashPages),
-			FlashStart:  int(wc.FlashStart),
-			CpuId:       wc.CpuId[:],
-			Version:     int(wc.Version),
+		info = Info{
+			PageSize:    int(wi.PageSize),
+			BufferPages: int(wi.BufferPages),
+			FlashPages:  int(wi.FlashPages),
+			FlashStart:  int(wi.FlashStart),
+			CpuId:       wi.CpuId[:],
+			Version:     int(wi.Version),
 		}
 		// We're connected!
 		break
 	}
 
-	if conf.PageSize != PageSize {
+	if info.PageSize != PageSize {
 		err = fmt.Errorf("Unsupported page size: %d. This utility only supports PageSize=%d",
-			conf.PageSize, PageSize)
+			info.PageSize, PageSize)
 		return
 	}
 	return
