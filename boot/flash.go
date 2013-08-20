@@ -141,6 +141,10 @@ func FlashPage(dev crazyradio.Device, conf Config, page int, mem []byte) (err er
 				// Some weird packet; ignore it
 				continue
 			}
+			if p[3] != 1 /* done */ || p[4] != 0 /* error */ {
+				log.Printf("Flashing attempt failed, done: %d, error: %d", p[3], p[4])
+				continue
+			}
 			ok = true
 			break
 		}
