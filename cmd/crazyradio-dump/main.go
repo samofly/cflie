@@ -51,19 +51,9 @@ func main() {
 	buf := make([]byte, 128)
 	var conf CrazyflieConfig
 
-	list, err := usb.ListDevices()
+	dev, err := usb.OpenAny()
 	if err != nil {
-		log.Fatalf("Unable list Crazyradio dongles: %v", err)
-	}
-
-	if len(list) == 0 {
-		log.Fatalf("No Crazyradio USB dongles found")
-	}
-
-	info := list[0]
-	dev, err := usb.Open(info)
-	if err != nil {
-		log.Fatalf("Unable to open Crazyradio USB dongle: %v", err)
+		log.Fatal(err)
 	}
 	defer dev.Close()
 
