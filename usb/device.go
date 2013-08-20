@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/samofly/crazyradio"
 	"github.com/kylelemons/gousb/usb"
+	"github.com/samofly/crazyradio"
 )
 
 type Request uint8
@@ -62,6 +62,24 @@ func Open(info crazyradio.DeviceInfo) (dev crazyradio.Device, err error) {
 		return nil, fmt.Errorf("Unable to init dongle: %v", err)
 	}
 	return res, nil
+}
+
+// OpenAny finds and opens an available CrazyRadio USB dongle
+func OpenAny() (dev crazyradio.Device, err error) {
+	list, err := ListDevices()
+	if err != nil {
+		return
+	}
+	if len(list) == 0 {
+		return nil, fmt.Errorf("No CrazyRadio USB dongles found")
+	}
+	for _, v := range list {
+		dev, err = Open(v)
+		if err == nil {
+			return
+		}
+	}
+	return nil, err
 }
 
 type device struct {
