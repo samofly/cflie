@@ -38,8 +38,8 @@ func FlashPage(dev crazyradio.Device, info Info, page int, mem []byte) (err erro
 	if page < info.FlashStart {
 		return fmt.Errorf("FlashPage: %d = page < FlashStart =  %d", page, info.FlashStart)
 	}
-	if page >= ConfigPageIndex {
-		return fmt.Errorf("FlashPage: %d = page >= ConfigPageIndex = %d", page, ConfigPageIndex)
+	if page >= info.FlashPages {
+		return fmt.Errorf("FlashPage: %d = page >= info.FlashPages = %d", page, info.FlashPages)
 	}
 	buf := make([]byte, 128)
 	got := make(map[int]bool)

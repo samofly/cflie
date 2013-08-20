@@ -38,7 +38,20 @@ func ReadConfig(dev crazyradio.Device, info Info) (conf Config, err error) {
 		return
 	}
 	if conf.Magic != ConfigMagic {
-		err = ErrConfigEmpty
+		conf = DefaultConfig
+		return
+	}
+	return
+}
+
+func WriteConfig(dev crazyradio.Device, info Info, conf Config) (err error) {
+	buf := new(bytes.Buffer)
+	if err = binary.Write(buf, binary.LittleEndian, conf); err != nil {
+		return
+	}
+	mem := make([]byte, info.PageSize)
+	copy(mem, buf.Bytes())
+	if err = FlashPage(dev, info, ConfigPageIndex, mem); err != nil {
 		return
 	}
 	return
