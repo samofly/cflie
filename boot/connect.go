@@ -21,7 +21,7 @@ const (
 
 	PageSize = 1024
 
-	ConfigPageIndex = 117
+	ConfigPageIndex = 127
 
 	CpuIdLen = 12
 )
