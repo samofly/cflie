@@ -31,15 +31,15 @@ func writeFlash(bufferPage, flashPage, pages uint16) []byte {
 }
 
 // FlashPage writes 1 page to Crazyflie flash storage
-func FlashPage(dev crazyradio.Device, conf Config, page int, mem []byte) (err error) {
-	if len(mem) != conf.PageSize {
-		return fmt.Errorf("FlashPage: %d = len(mem) != conf.PageSize = %d", len(mem), conf.PageSize)
+func FlashPage(dev crazyradio.Device, info Info, page int, mem []byte) (err error) {
+	if len(mem) != info.PageSize {
+		return fmt.Errorf("FlashPage: %d = len(mem) != info.PageSize = %d", len(mem), info.PageSize)
 	}
-	if page < conf.FlashStart {
-		return fmt.Errorf("FlashPage: %d = page < FlashStart =  %d", page, conf.FlashStart)
+	if page < info.FlashStart {
+		return fmt.Errorf("FlashPage: %d = page < FlashStart =  %d", page, info.FlashStart)
 	}
-	if page >= ConfigPageIndex {
-		return fmt.Errorf("FlashPage: %d = page >= ConfigPageIndex = %d", page, ConfigPageIndex)
+	if page >= info.FlashPages {
+		return fmt.Errorf("FlashPage: %d = page >= info.FlashPages = %d", page, info.FlashPages)
 	}
 	buf := make([]byte, 128)
 	got := make(map[int]bool)
@@ -47,7 +47,7 @@ func FlashPage(dev crazyradio.Device, conf Config, page int, mem []byte) (err er
 	// 1. Load page to memory buffer and verify that all the data is correct
 	for try := 0; try < 10; try++ {
 		// Load buffer
-		for offset := 0; offset < conf.PageSize; offset += 16 {
+		for offset := 0; offset < info.PageSize; offset += 16 {
 			if got[offset] {
 				// Skip chunks which are already in the buffer
 				continue
@@ -60,7 +60,7 @@ func FlashPage(dev crazyradio.Device, conf Config, page int, mem []byte) (err er
 
 		// Read buffer
 		for rtry := 0; rtry <= 2; rtry++ {
-			for offset := 0; offset < conf.PageSize; offset += 16 {
+			for offset := 0; offset < info.PageSize; offset += 16 {
 				if got[offset] {
 					continue
 				}
@@ -109,7 +109,7 @@ func FlashPage(dev crazyradio.Device, conf Config, page int, mem []byte) (err er
 	}
 	// Check that we got all chunks to the buffer
 	ok := true
-	for offset := 0; offset < conf.PageSize; offset += 16 {
+	for offset := 0; offset < info.PageSize; offset += 16 {
 		if !got[offset] {
 			log.Printf("Failed to write a chunk into a buffer, offset=%d", offset)
 			ok = false
@@ -155,7 +155,7 @@ func FlashPage(dev crazyradio.Device, conf Config, page int, mem []byte) (err er
 	log.Printf("Page %d seems to be written, verifying...", page)
 
 	// 3. Read Flash page and verify
-	dump, err := Dump(dev, conf, page, page+1)
+	dump, err := Dump(dev, info, page, page+1)
 	if err != nil {
 		return fmt.Errorf("Failed to dump the contents of page #%d: %v", page, err)
 	}

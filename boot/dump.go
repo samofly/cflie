@@ -15,17 +15,17 @@ func readFlash(page uint16, offset uint16) []byte {
 }
 
 // Dump downloads a region of Flash memory from Crazyflie. Device must be already connected to the bootloader.
-func Dump(dev crazyradio.Device, conf Config, fromPage, toPage int) (mem []byte, err error) {
+func Dump(dev crazyradio.Device, info Info, fromPage, toPage int) (mem []byte, err error) {
 	buf := make([]byte, 128)
 	got := make(map[int]bool)
-	mem = make([]byte, (toPage-fromPage)*conf.PageSize)
+	mem = make([]byte, (toPage-fromPage)*info.PageSize)
 	for try := 0; try < 10; try++ {
 		for page := fromPage; page < toPage; page++ {
 			if try == 0 {
 				fmt.Fprintf(os.Stderr, ".")
 			}
-			for offset := 0; offset < conf.PageSize; offset += 16 {
-				start := page*conf.PageSize + offset
+			for offset := 0; offset < info.PageSize; offset += 16 {
+				start := page*info.PageSize + offset
 				if got[start] {
 					// Do not request already received chunks
 					continue
@@ -52,9 +52,9 @@ func Dump(dev crazyradio.Device, conf Config, fromPage, toPage int) (mem []byte,
 					page := int(p[3]) + (int(p[4]) << 8)
 					offset := int(p[5]) + (int(p[6]) << 8)
 					data := p[7 : 7+16]
-					start := page*conf.PageSize + offset
+					start := page*info.PageSize + offset
 					got[start] = true
-					index := start - fromPage*conf.PageSize
+					index := start - fromPage*info.PageSize
 					copy(mem[index:index+16], data)
 
 				}
@@ -64,8 +64,8 @@ func Dump(dev crazyradio.Device, conf Config, fromPage, toPage int) (mem []byte,
 
 	missing := false
 	for page := fromPage; page < toPage; page++ {
-		for offset := 0; offset < conf.PageSize; offset += 16 {
-			start := page*conf.PageSize + offset
+		for offset := 0; offset < info.PageSize; offset += 16 {
+			start := page*info.PageSize + offset
 			if !got[start] {
 				log.Printf("Missing chunk: index=%d", start)
 				missing = true
