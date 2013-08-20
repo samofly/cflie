@@ -28,7 +28,6 @@ const (
 	CMD_FLASH_STATUS = 0x19
 	CMD_READ_FLASH   = 0x1C
 
-	PageNum  = 128
 	PageSize = 1024
 
 	ConfigPageIndex = 117
@@ -49,8 +48,7 @@ func main() {
 	flag.Parse()
 
 	got := make(map[int]bool)
-	mem := make([]byte, PageNum*PageSize)
-	buf := make([]byte, PageNum)
+	buf := make([]byte, 128)
 	var conf CrazyflieConfig
 
 	list, err := usb.ListDevices()
@@ -112,6 +110,8 @@ func main() {
 			conf.PageSize, PageSize)
 	}
 
+	mem := make([]byte, int(conf.FlashPages)*PageSize)
+
 	readFlash := func(page uint16, offset uint16) []byte {
 		return []byte{0xFF, 0xFF, CMD_READ_FLASH,
 			byte(page & 0xFF), byte((page >> 8) & 0xFF),
@@ -120,7 +120,7 @@ func main() {
 
 	log.Printf("Downloading the contents of Crazyflie Flash memory...")
 	for try := 0; try < 10; try++ {
-		for page := uint16(0); page < PageNum; page++ {
+		for page := uint16(0); page < conf.FlashPages; page++ {
 			if try == 0 {
 				fmt.Fprintf(os.Stderr, ".")
 			}
@@ -161,7 +161,7 @@ func main() {
 	}
 
 	missing := false
-	for page := uint16(0); page < PageNum; page++ {
+	for page := uint16(0); page < conf.FlashPages; page++ {
 		for offset := uint16(0); offset < PageSize; offset += 16 {
 			start := int(page)*PageSize + int(offset)
 			if !got[start] {
