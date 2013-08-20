@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/samofly/crazyradio"
 	"github.com/samofly/crazyradio/usb"
@@ -13,6 +15,7 @@ const BootloaderChannel = 110
 
 const (
 	CMD_GET_INFO     = 0x10
+	CMD_SET_ADDRESS  = 0x11
 	CMD_LOAD_BUFFER  = 0x14
 	CMD_READ_BUFFER  = 0x15
 	CMD_WRITE_FLASH  = 0x18
@@ -42,6 +45,10 @@ type Info struct {
 	FlashStart  int
 	CpuId       []byte
 	Version     int
+}
+
+func setRadioAddress(addr [5]byte) (p []byte) {
+	return []byte{0xFF, 0xFF, CMD_SET_ADDRESS, addr[0], addr[1], addr[2], addr[3], addr[4]}
 }
 
 // Cold waits for a Crazyflie startup and connects to its bootloader.
@@ -98,5 +105,28 @@ func Cold() (dev crazyradio.Device, info Info, err error) {
 			info.PageSize, PageSize)
 		return
 	}
+
+	// Now, we need to send CMD_SET_ADDRESS to get away from the default one
+	// This will ensure that even if there's more than one Crazyflies are being updated,
+	// they will behave correctly (though, probably, slower, since channel and rate are still
+	// the same
+	sec := time.Now().Second()
+	nano := time.Now().Nanosecond()
+	addr := [5]byte{byte(sec), byte(nano & 0xFF), byte((nano >> 8) & 0xFF),
+		byte((nano >> 16)) & 0xFF, byte((nano >> 24) & 0xFF)}
+	ok := false
+	for try := 0; try < 10; try++ {
+		_, err = dev.Write(setRadioAddress(addr))
+		if err != nil {
+			log.Printf("CMD_SET_ADDRESS: %v", err)
+			continue
+		}
+		ok = true
+	}
+	if !ok {
+		err = fmt.Errorf("Failed to send CMD_SET_ADDRESS: %v", err)
+		return
+	}
+	err = dev.SetRadioAddress(addr)
 	return
 }

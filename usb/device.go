@@ -31,6 +31,8 @@ const (
 	DefaultDataRate = crazyradio.DATA_RATE_250K
 )
 
+var DefaultRadioAddress = [5]byte{0xE7, 0xE7, 0xE7, 0xE7, 0xE7}
+
 var defaultContext = usb.NewContext()
 
 var ErrDeviceNotFound = fmt.Errorf("Device not found")
@@ -164,6 +166,10 @@ func (d *device) setChannel(ch uint8) error {
 	return d.control(SET_RADIO_CHANNEL, uint16(ch), nil)
 }
 
+func (d *device) SetRadioAddress(addr [5]byte) error {
+	return d.control(SET_RADIO_ADDRESS, 0, addr[:])
+}
+
 func (d *device) initDongle(ch uint8, rate crazyradio.DataRate) (err error) {
 	d.d.ReadTimeout = 50 * time.Millisecond
 	d.d.ControlTimeout = 10 * time.Second // Scans are slow
@@ -195,7 +201,7 @@ func (d *device) initDongle(ch uint8, rate crazyradio.DataRate) (err error) {
 	if err = d.control(SET_CONT_CARRIER, 0, nil); err != nil {
 		return
 	}
-	if err = d.control(SET_RADIO_ADDRESS, 0, []byte{0xE7, 0xE7, 0xE7, 0xE7, 0xE7}); err != nil {
+	if err = d.SetRadioAddress(DefaultRadioAddress); err != nil {
 		return
 	}
 	if err = d.control(SET_RADIO_POWER, RADIO_POWER_0dBm, nil); err != nil {
