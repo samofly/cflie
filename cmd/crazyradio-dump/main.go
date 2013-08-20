@@ -107,6 +107,11 @@ func main() {
 	log.Printf("Connected to bootloader")
 	log.Printf("Config: %+v", conf)
 
+	if conf.PageSize != PageSize {
+		log.Fatal("Unsupported page size: %d. This utility only supports PageSize=%d",
+			conf.PageSize, PageSize)
+	}
+
 	readFlash := func(page uint16, offset uint16) []byte {
 		return []byte{0xFF, 0xFF, CMD_READ_FLASH,
 			byte(page & 0xFF), byte((page >> 8) & 0xFF),
@@ -170,7 +175,7 @@ func main() {
 	}
 	fmt.Fprintf(os.Stderr, "\n")
 	if !*full {
-		mem = mem[:ConfigPageIndex*PageSize]
+		mem = mem[conf.FlashStart*PageSize : ConfigPageIndex*PageSize]
 	}
 	if err = ioutil.WriteFile(*output, mem, 0644); err != nil {
 		log.Fatalf("Unable to dump memory to file %s: %v", *output, err)
