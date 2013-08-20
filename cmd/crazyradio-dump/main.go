@@ -14,6 +14,7 @@ import (
 
 var output = flag.String("output", "cflie.dump", "Output file")
 var verbose = flag.Bool("v", false, "Verbosity")
+var full = flag.Bool("full", false, "Download full memory: image + config")
 
 const BootloaderChannel = 110
 
@@ -27,6 +28,8 @@ const (
 
 	PageNum  = 128
 	PageSize = 1024
+
+	ConfigPageIndex = 117
 )
 
 func main() {
@@ -145,6 +148,9 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Fprintf(os.Stderr, "\n")
+	if !*full {
+		mem = mem[:ConfigPageIndex*PageSize]
+	}
 	if err = ioutil.WriteFile(*output, mem, 0644); err != nil {
 		log.Fatalf("Unable to dump memory to file %s: %v", *output, err)
 	}
