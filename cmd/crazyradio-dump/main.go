@@ -2,120 +2,50 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 
-	"github.com/samofly/crazyradio"
-	"github.com/samofly/crazyradio/usb"
+	"github.com/samofly/crazyradio/boot"
 )
 
 var output = flag.String("output", "cflie.dump", "Output file")
-var verbose = flag.Bool("v", false, "Verbosity")
 var full = flag.Bool("full", false, "Download full memory: image + config")
-
-const BootloaderChannel = 110
-
-const (
-	CMD_GET_INFO     = 0x10
-	CMD_LOAD_BUFFER  = 0x14
-	CMD_READ_BUFFER  = 0x15
-	CMD_WRITE_FLASH  = 0x18
-	CMD_FLASH_STATUS = 0x19
-	CMD_READ_FLASH   = 0x1C
-
-	PageSize = 1024
-
-	ConfigPageIndex = 117
-
-	CpuIdLen = 12
-)
-
-type CrazyflieConfig struct {
-	PageSize    uint16
-	BufferPages uint16
-	FlashPages  uint16
-	FlashStart  uint16
-	CpuId       [CpuIdLen]byte
-	Version     byte
-}
 
 func main() {
 	flag.Parse()
 
 	got := make(map[int]bool)
 	buf := make([]byte, 128)
-	var conf CrazyflieConfig
+	var conf boot.Config
 
-	dev, err := usb.OpenAny()
+	log.Printf("Connecting to bootloader, please, restart Crazyflie...")
+	dev, conf, err := boot.Cold()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer dev.Close()
-
-	err = dev.SetRateAndChannel(crazyradio.DATA_RATE_2M, BootloaderChannel)
-	if err != nil {
-		log.Fatal("SetRateAndChannel: %v", err)
-	}
-
-	log.Printf("Connecting to bootloader, please, restart Crazyflie...")
-	for {
-		_, err = dev.Write([]byte{0xFF, 0xFF, 0x10})
-		if err != nil {
-			log.Printf("write: %v", err)
-			continue
-		}
-		n, err := dev.Read(buf)
-		if err != nil {
-			log.Printf("read: n: %d, err: %v", n, err)
-			continue
-		}
-		if n < 4 || buf[3] != CMD_GET_INFO {
-			if *verbose {
-				fmt.Fprintf(os.Stderr, ".")
-			}
-			continue
-		}
-		// Try to parse config
-		err = binary.Read(bytes.NewBuffer(buf[4:n]), binary.LittleEndian, &conf)
-		if err != nil {
-			log.Printf("unable to parse config, received from the copter: %v", err)
-			continue
-		}
-		// We're connected!
-		break
-	}
-	if *verbose {
-		fmt.Fprintf(os.Stderr, "\n")
-	}
 	log.Printf("Connected to bootloader")
 	log.Printf("Config: %+v", conf)
 
-	if conf.PageSize != PageSize {
-		log.Fatal("Unsupported page size: %d. This utility only supports PageSize=%d",
-			conf.PageSize, PageSize)
-	}
-
-	mem := make([]byte, int(conf.FlashPages)*PageSize)
+	mem := make([]byte, conf.FlashPages*conf.PageSize)
 
 	readFlash := func(page uint16, offset uint16) []byte {
-		return []byte{0xFF, 0xFF, CMD_READ_FLASH,
+		return []byte{0xFF, 0xFF, boot.CMD_READ_FLASH,
 			byte(page & 0xFF), byte((page >> 8) & 0xFF),
 			byte(offset & 0xFF), byte((offset >> 8) & 0xFF)}
 	}
 
 	log.Printf("Downloading the contents of Crazyflie Flash memory...")
 	for try := 0; try < 10; try++ {
-		for page := uint16(0); page < conf.FlashPages; page++ {
+		for page := 0; page < conf.FlashPages; page++ {
 			if try == 0 {
 				fmt.Fprintf(os.Stderr, ".")
 			}
-			for offset := uint16(0); offset < PageSize; offset += 16 {
-				start := int(page)*PageSize + int(offset)
+			for offset := 0; offset < conf.PageSize; offset += 16 {
+				start := page*conf.PageSize + offset
 				if got[start] {
 					// Do not request already received chunks
 					continue
@@ -123,7 +53,7 @@ func main() {
 				if try > 0 {
 					fmt.Fprintf(os.Stderr, "{Retry: %d}", start)
 				}
-				_, err = dev.Write(readFlash(page, offset))
+				_, err = dev.Write(readFlash(uint16(page), uint16(offset)))
 				if err != nil {
 					log.Printf("write: %v", err)
 					continue
@@ -138,11 +68,11 @@ func main() {
 					continue
 				}
 				p := buf[1:n]
-				if len(p) > 10 && p[2] == CMD_READ_FLASH {
+				if len(p) > 10 && p[2] == boot.CMD_READ_FLASH {
 					page := uint16(p[3]) + (uint16(p[4]) << 8)
 					offset := uint16(p[5]) + (uint16(p[6]) << 8)
 					data := p[7 : 7+16]
-					start := int(page)*PageSize + int(offset)
+					start := int(page)*int(conf.PageSize) + int(offset)
 					copy(mem[start:start+16], data)
 					got[start] = true
 				}
@@ -151,9 +81,9 @@ func main() {
 	}
 
 	missing := false
-	for page := uint16(0); page < conf.FlashPages; page++ {
-		for offset := uint16(0); offset < PageSize; offset += 16 {
-			start := int(page)*PageSize + int(offset)
+	for page := 0; page < conf.FlashPages; page++ {
+		for offset := 0; offset < conf.PageSize; offset += 16 {
+			start := page*conf.PageSize + offset
 			if !got[start] {
 				log.Printf("Missing chunk: start=%d", start)
 				missing = true
@@ -165,7 +95,7 @@ func main() {
 	}
 	fmt.Fprintf(os.Stderr, "\n")
 	if !*full {
-		mem = mem[conf.FlashStart*PageSize : ConfigPageIndex*PageSize]
+		mem = mem[conf.FlashStart*conf.PageSize : boot.ConfigPageIndex*conf.PageSize]
 	}
 	if err = ioutil.WriteFile(*output, mem, 0644); err != nil {
 		log.Fatalf("Unable to dump memory to file %s: %v", *output, err)
