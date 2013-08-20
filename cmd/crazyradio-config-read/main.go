@@ -21,16 +21,14 @@ type Config struct {
 }
 
 func main() {
-	var conf boot.Config
-
 	log.Printf("Connecting to bootloader, please, restart Crazyflie...")
-	dev, conf, err := boot.Cold()
+	dev, info, err := boot.Cold()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer dev.Close()
 
-	data, err := boot.Dump(dev, conf, boot.ConfigPageIndex, boot.ConfigPageIndex+1)
+	data, err := boot.Dump(dev, info, boot.ConfigPageIndex, boot.ConfigPageIndex+1)
 	if err != nil {
 		log.Fatal(err)
 	}

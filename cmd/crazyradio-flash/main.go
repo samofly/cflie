@@ -26,30 +26,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var conf boot.Config
-
 	log.Printf("Connecting to bootloader, please, restart Crazyflie...")
-	dev, conf, err := boot.Cold()
+	dev, info, err := boot.Cold()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer dev.Close()
 	log.Printf("Connected to bootloader")
-	log.Printf("Config: %+v", conf)
+	log.Printf("Info: %+v", info)
 
-	padding := make([]byte, (conf.PageSize-len(data)%conf.PageSize)%conf.PageSize)
+	padding := make([]byte, (info.PageSize-len(data)%info.PageSize)%info.PageSize)
 	mem := append(data, padding...)
 
 	log.Printf("Writing the image to Crazyflie Flash memory...")
-	fromPage := conf.FlashStart
-	toPage := fromPage + len(mem)/conf.PageSize
+	fromPage := info.FlashStart
+	toPage := fromPage + len(mem)/info.PageSize
 	if toPage > boot.ConfigPageIndex {
 		log.Fatal("Image is too large: %d bytes. Must not exceed %d bytes",
-			len(data), (boot.ConfigPageIndex-conf.FlashStart)*conf.PageSize)
+			len(data), (boot.ConfigPageIndex-info.FlashStart)*info.PageSize)
 	}
 	for page := fromPage; page < toPage; page++ {
-		index := (page - fromPage) * conf.PageSize
-		err := boot.FlashPage(dev, conf, page, mem[index:index+conf.PageSize])
+		index := (page - fromPage) * info.PageSize
+		err := boot.FlashPage(dev, info, page, mem[index:index+info.PageSize])
 		if err != nil {
 			log.Fatalf("Failed to flash page #%d (image spans from #%d to #%d): %v",
 				page, fromPage, toPage, err)
