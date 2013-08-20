@@ -2,6 +2,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -30,7 +32,18 @@ const (
 	PageSize = 1024
 
 	ConfigPageIndex = 117
+
+	CpuIdLen = 12
 )
+
+type CrazyflieConfig struct {
+	PageSize    uint16
+	BufferPages uint16
+	FlashPages  uint16
+	FlashStart  uint16
+	CpuId       [CpuIdLen]byte
+	Version     byte
+}
 
 func main() {
 	flag.Parse()
@@ -38,6 +51,7 @@ func main() {
 	got := make(map[int]bool)
 	mem := make([]byte, PageNum*PageSize)
 	buf := make([]byte, PageNum)
+	var conf CrazyflieConfig
 
 	list, err := usb.ListDevices()
 	if err != nil {
@@ -72,10 +86,16 @@ func main() {
 			log.Printf("read: n: %d, err: %v", n, err)
 			continue
 		}
-		if n <= 1 {
+		if n < 4 || buf[3] != CMD_GET_INFO {
 			if *verbose {
 				fmt.Fprintf(os.Stderr, ".")
 			}
+			continue
+		}
+		// Try to parse config
+		err = binary.Read(bytes.NewBuffer(buf[4:n]), binary.LittleEndian, &conf)
+		if err != nil {
+			log.Printf("unable to parse config, received from the copter: %v", err)
 			continue
 		}
 		// We're connected!
@@ -85,6 +105,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\n")
 	}
 	log.Printf("Connected to bootloader")
+	log.Printf("Config: %+v", conf)
 
 	readFlash := func(page uint16, offset uint16) []byte {
 		return []byte{0xFF, 0xFF, CMD_READ_FLASH,
