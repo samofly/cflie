@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/samofly/cflie/pkg/ls"
+	"github.com/samofly/cflie/pkg/scan"
 )
 
 func main() {
@@ -18,6 +19,8 @@ func main() {
 	switch cmd {
 	case "ls":
 		ls.Main()
+	case "scan":
+		scan.Main()
 	default:
 		log.Fatalf("Unknown command %s", cmd)
 	}

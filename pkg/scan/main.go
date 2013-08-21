@@ -1,5 +1,5 @@
 // Utility scans spectrum and shows channels on which Crazyflies found
-package main
+package scan
 
 import (
 	"log"
@@ -8,7 +8,7 @@ import (
 	"github.com/samofly/cflie/usb"
 )
 
-func main() {
+func Main() {
 	st, err := cflie.Start(usb.Hub)
 	if err != nil {
 		log.Fatal(err)
