@@ -7,6 +7,7 @@ import (
 
 	"github.com/samofly/cflie/pkg/ls"
 	"github.com/samofly/cflie/pkg/scan"
+	"github.com/samofly/cflie/pkg/spin"
 )
 
 func main() {
@@ -21,6 +22,8 @@ func main() {
 		ls.Main()
 	case "scan":
 		scan.Main()
+	case "spin":
+		spin.Main()
 	default:
 		log.Fatalf("Unknown command %s", cmd)
 	}
