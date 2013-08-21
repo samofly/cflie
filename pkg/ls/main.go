@@ -1,5 +1,5 @@
 // Enumerates USB devices, finds and identifies CrazyRadio USB dongle.
-package main
+package ls
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/samofly/cflie/usb"
 )
 
-func main() {
+func Main() {
 	list, err := usb.ListDevices()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ListDevices: %v\n", err)
