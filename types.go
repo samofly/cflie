@@ -1,4 +1,4 @@
-package crazyradio
+package cflie
 
 import "fmt"
 

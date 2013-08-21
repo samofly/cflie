@@ -2,10 +2,10 @@
 package main
 
 import (
-	"github.com/samofly/crazyradio"
+	"github.com/samofly/cflie"
 )
 
 func main() {
-	crazyradio.Start(nil)
+	cflie.Start(nil)
 	select {}
 }

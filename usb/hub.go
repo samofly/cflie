@@ -4,20 +4,20 @@ import (
 	"log"
 	"time"
 
-	"github.com/samofly/crazyradio"
+	"github.com/samofly/cflie"
 )
 
 var Hub = &hub{}
 
 type hub struct{}
 
-func (h *hub) ListPush(cancelChan <-chan bool, errChan chan<- error) <-chan []crazyradio.DeviceInfo {
-	lsChan := make(chan []crazyradio.DeviceInfo)
+func (h *hub) ListPush(cancelChan <-chan bool, errChan chan<- error) <-chan []cflie.DeviceInfo {
+	lsChan := make(chan []cflie.DeviceInfo)
 	go listPush(lsChan, cancelChan, errChan)
 	return lsChan
 }
 
-func listPush(lsChan chan<- []crazyradio.DeviceInfo, cancelChan <-chan bool, errChan chan<- error) {
+func listPush(lsChan chan<- []cflie.DeviceInfo, cancelChan <-chan bool, errChan chan<- error) {
 	defer close(errChan)
 	defer close(lsChan)
 	first := true
@@ -47,10 +47,10 @@ func listPush(lsChan chan<- []crazyradio.DeviceInfo, cancelChan <-chan bool, err
 	}
 }
 
-func (h *hub) List() ([]crazyradio.DeviceInfo, error) {
+func (h *hub) List() ([]cflie.DeviceInfo, error) {
 	return ListDevices()
 }
 
-func (h *hub) Open(info crazyradio.DeviceInfo) (dev crazyradio.Device, err error) {
+func (h *hub) Open(info cflie.DeviceInfo) (dev cflie.Device, err error) {
 	return Open(info)
 }

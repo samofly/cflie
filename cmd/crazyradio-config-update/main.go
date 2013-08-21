@@ -5,8 +5,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/samofly/crazyradio"
-	"github.com/samofly/crazyradio/boot"
+	"github.com/samofly/cflie"
+	"github.com/samofly/cflie/boot"
 )
 
 var channel = flag.Int("channel", 0, "Radio channel (1..125); ch=119 used by radio bootloader; ch=10 is a factory setting")
@@ -28,8 +28,8 @@ func main() {
 	log.Printf("Config block: %+v", conf)
 
 	if *channel != 0 {
-		if *channel > crazyradio.MaxChannel {
-			log.Fatal("Max channel: %d", crazyradio.MaxChannel)
+		if *channel > cflie.MaxChannel {
+			log.Fatal("Max channel: %d", cflie.MaxChannel)
 		}
 		if *channel <= 0 {
 			log.Fatal("Channel must be positive")

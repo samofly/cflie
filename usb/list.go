@@ -3,7 +3,7 @@ package usb
 import (
 	"fmt"
 
-	"github.com/samofly/crazyradio"
+	"github.com/samofly/cflie"
 	"github.com/kylelemons/gousb/usb"
 )
 
@@ -13,8 +13,8 @@ const (
 )
 
 // ListDevices returns the list of attached CrazyRadio devices.
-func ListDevices() ([]crazyradio.DeviceInfo, error) {
-	var d []crazyradio.DeviceInfo
+func ListDevices() ([]cflie.DeviceInfo, error) {
+	var d []cflie.DeviceInfo
 	_, err := defaultContext.ListDevices(func(desc *usb.Descriptor) bool {
 		if desc.Vendor == Vendor && desc.Product == Product {
 			d = append(d, deviceInfo{*desc})

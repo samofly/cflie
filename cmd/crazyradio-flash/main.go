@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/samofly/crazyradio/boot"
+	"github.com/samofly/cflie/boot"
 )
 
 var image = flag.String("image", "", "Image to flash")

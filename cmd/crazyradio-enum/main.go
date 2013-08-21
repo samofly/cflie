@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/samofly/crazyradio"
-	"github.com/samofly/crazyradio/usb"
+	"github.com/samofly/cflie"
+	"github.com/samofly/cflie/usb"
 )
 
 func fail(format string, args ...interface{}) {
@@ -31,7 +31,7 @@ func countPackets(recvChan <-chan []byte) {
 }
 
 func main() {
-	st, err := crazyradio.Start(usb.Hub)
+	st, err := cflie.Start(usb.Hub)
 	if err != nil {
 		fail("Unable to start station: %v\n", err)
 	}

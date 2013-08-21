@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/samofly/crazyradio"
-	"github.com/samofly/crazyradio/usb"
+	"github.com/samofly/cflie"
+	"github.com/samofly/cflie/usb"
 )
 
 const BootloaderChannel = 110
@@ -52,7 +52,7 @@ func setRadioAddress(addr [5]byte) (p []byte) {
 }
 
 // Cold waits for a Crazyflie startup and connects to its bootloader.
-func Cold() (dev crazyradio.Device, info Info, err error) {
+func Cold() (dev cflie.Device, info Info, err error) {
 	buf := make([]byte, 128)
 	dev, err = usb.OpenAny()
 	if err != nil {
@@ -64,7 +64,7 @@ func Cold() (dev crazyradio.Device, info Info, err error) {
 			dev = nil
 		}
 	}()
-	err = dev.SetRateAndChannel(crazyradio.DATA_RATE_2M, BootloaderChannel)
+	err = dev.SetRateAndChannel(cflie.DATA_RATE_2M, BootloaderChannel)
 	if err != nil {
 		err = fmt.Errorf("SetRateAndChannel: %v", err)
 		return

@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/samofly/crazyradio"
+	"github.com/samofly/cflie"
 )
 
 func readFlash(page uint16, offset uint16) []byte {
@@ -15,7 +15,7 @@ func readFlash(page uint16, offset uint16) []byte {
 }
 
 // Dump downloads a region of Flash memory from Crazyflie. Device must be already connected to the bootloader.
-func Dump(dev crazyradio.Device, info Info, fromPage, toPage int) (mem []byte, err error) {
+func Dump(dev cflie.Device, info Info, fromPage, toPage int) (mem []byte, err error) {
 	buf := make([]byte, 128)
 	got := make(map[int]bool)
 	mem = make([]byte, (toPage-fromPage)*info.PageSize)

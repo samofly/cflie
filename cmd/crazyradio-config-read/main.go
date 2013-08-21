@@ -4,7 +4,7 @@ package main
 import (
 	"log"
 
-	"github.com/samofly/crazyradio/boot"
+	"github.com/samofly/cflie/boot"
 )
 
 func main() {

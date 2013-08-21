@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/samofly/crazyradio"
+	"github.com/samofly/cflie"
 )
 
 func loadBuffer(page uint16, offset uint16, data []byte) (p []byte) {
@@ -31,7 +31,7 @@ func writeFlash(bufferPage, flashPage, pages uint16) []byte {
 }
 
 // FlashPage writes 1 page to Crazyflie flash storage
-func FlashPage(dev crazyradio.Device, info Info, page int, mem []byte) (err error) {
+func FlashPage(dev cflie.Device, info Info, page int, mem []byte) (err error) {
 	if len(mem) != info.PageSize {
 		return fmt.Errorf("FlashPage: %d = len(mem) != info.PageSize = %d", len(mem), info.PageSize)
 	}

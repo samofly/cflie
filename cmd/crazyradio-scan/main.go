@@ -4,12 +4,12 @@ package main
 import (
 	"log"
 
-	"github.com/samofly/crazyradio"
-	"github.com/samofly/crazyradio/usb"
+	"github.com/samofly/cflie"
+	"github.com/samofly/cflie/usb"
 )
 
 func main() {
-	st, err := crazyradio.Start(usb.Hub)
+	st, err := cflie.Start(usb.Hub)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -17,5 +17,5 @@ func main() {
 	if err != nil {
 		log.Fatalf("Scan failed: %v", err)
 	}
-	log.Printf("Found crazyflies: %v", addr)
+	log.Printf("Found Crazyflies: %v", addr)
 }

@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/samofly/crazyradio/boot"
+	"github.com/samofly/cflie/boot"
 )
 
 var output = flag.String("output", "cflie.dump", "Output file")

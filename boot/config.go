@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/samofly/crazyradio"
+	"github.com/samofly/cflie"
 )
 
 var ConfigMagic = [4]byte{'0', 'x', 'B', 'C'}
@@ -28,7 +28,7 @@ var DefaultConfig = Config{
 	RollTrim:  0,
 }
 
-func ReadConfig(dev crazyradio.Device, info Info) (conf Config, err error) {
+func ReadConfig(dev cflie.Device, info Info) (conf Config, err error) {
 	data, err := Dump(dev, info, ConfigPageIndex, ConfigPageIndex+1)
 	if err != nil {
 		return
@@ -44,7 +44,7 @@ func ReadConfig(dev crazyradio.Device, info Info) (conf Config, err error) {
 	return
 }
 
-func WriteConfig(dev crazyradio.Device, info Info, conf Config) (err error) {
+func WriteConfig(dev cflie.Device, info Info, conf Config) (err error) {
 	buf := new(bytes.Buffer)
 	if err = binary.Write(buf, binary.LittleEndian, conf); err != nil {
 		return
