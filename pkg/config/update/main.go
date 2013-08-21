@@ -1,5 +1,5 @@
 // This utility updates the config block on crazyflie
-package main
+package update
 
 import (
 	"flag"
@@ -9,10 +9,11 @@ import (
 	"github.com/samofly/cflie/boot"
 )
 
-var channel = flag.Int("channel", 0, "Radio channel (1..125); ch=119 used by radio bootloader; ch=10 is a factory setting")
+var flags = flag.NewFlagSet("config.update", flag.ExitOnError)
+var channel = flags.Int("channel", 0, "Radio channel (1..125); ch=119 used by radio bootloader; ch=10 is a factory setting")
 
-func main() {
-	flag.Parse()
+func Main() {
+	flags.Parse(flag.Args()[2:])
 
 	log.Printf("Connecting to bootloader, please, restart Crazyflie...")
 	dev, info, err := boot.Cold()
