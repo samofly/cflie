@@ -9,11 +9,12 @@ import (
 	"github.com/samofly/cflie/boot"
 )
 
-var output = flag.String("output", "cflie.dump", "Output file")
-var full = flag.Bool("full", false, "Download full memory: image + config")
+var flags = flag.NewFlagSet("dump", flag.ExitOnError)
+var output = flags.String("output", "cflie.dump", "Output file")
+var full = flags.Bool("full", false, "Download full memory: image + config")
 
 func Main() {
-	flag.Parse()
+	flags.Parse(flag.Args()[1:])
 
 	log.Printf("Connecting to bootloader, please, restart Crazyflie...")
 	dev, info, err := boot.Cold()

@@ -10,10 +10,12 @@ import (
 	"github.com/samofly/cflie/boot"
 )
 
-var image = flag.String("image", "", "Image to flash")
+var flags = flag.NewFlagSet("flash", flag.ExitOnError)
+var image = flags.String("image", "", "Image to flash")
 
 func Main() {
-	flag.Parse()
+	flags.Parse(flag.Args()[1:])
+	log.Printf("flags.Args: %+v", flags.Args())
 
 	if *image == "" {
 		log.Printf("Error: -image is not specified\n")

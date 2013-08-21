@@ -15,6 +15,8 @@ import (
 func main() {
 	flag.Parse()
 
+	flag.PrintDefaults()
+
 	if len(os.Args) == 1 {
 		log.Fatal("No command specified")
 	}
