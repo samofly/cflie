@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/samofly/cflie/pkg/config"
 	"github.com/samofly/cflie/pkg/dump"
 	"github.com/samofly/cflie/pkg/flash"
 	"github.com/samofly/cflie/pkg/ls"
@@ -22,6 +23,8 @@ func main() {
 	}
 	cmd := os.Args[1]
 	switch cmd {
+	case "config":
+		config.Main()
 	case "dump":
 		dump.Main()
 	case "flash":

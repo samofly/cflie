@@ -1,5 +1,5 @@
 // This utility reads a configuration block from Crazyflie.
-package main
+package read
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 	"github.com/samofly/cflie/boot"
 )
 
-func main() {
+func Main() {
 	log.Printf("Connecting to bootloader, please, restart Crazyflie...")
 	dev, info, err := boot.Cold()
 	if err != nil {
