@@ -1,5 +1,5 @@
 // This utility dumps the Flash contents of the flie.
-package main
+package dump
 
 import (
 	"flag"
@@ -12,7 +12,7 @@ import (
 var output = flag.String("output", "cflie.dump", "Output file")
 var full = flag.Bool("full", false, "Download full memory: image + config")
 
-func main() {
+func Main() {
 	flag.Parse()
 
 	log.Printf("Connecting to bootloader, please, restart Crazyflie...")

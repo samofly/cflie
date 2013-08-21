@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/samofly/cflie/pkg/dump"
 	"github.com/samofly/cflie/pkg/ls"
 	"github.com/samofly/cflie/pkg/scan"
 	"github.com/samofly/cflie/pkg/spin"
@@ -18,6 +19,8 @@ func main() {
 	}
 	cmd := os.Args[1]
 	switch cmd {
+	case "dump":
+		dump.Main()
 	case "ls":
 		ls.Main()
 	case "scan":
