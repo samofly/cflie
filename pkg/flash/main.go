@@ -1,5 +1,5 @@
 // This utility writes an image on the Crazyflie Flash storage.
-package main
+package flash
 
 import (
 	"flag"
@@ -12,7 +12,7 @@ import (
 
 var image = flag.String("image", "", "Image to flash")
 
-func main() {
+func Main() {
 	flag.Parse()
 
 	if *image == "" {
