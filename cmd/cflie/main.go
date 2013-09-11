@@ -9,6 +9,7 @@ import (
 	"github.com/samofly/cflie/pkg/dump"
 	"github.com/samofly/cflie/pkg/flash"
 	"github.com/samofly/cflie/pkg/ls"
+	"github.com/samofly/cflie/pkg/play"
 	"github.com/samofly/cflie/pkg/scan"
 	"github.com/samofly/cflie/pkg/spin"
 )
@@ -31,6 +32,8 @@ func main() {
 		flash.Main()
 	case "ls":
 		ls.Main()
+	case "play":
+		play.Main()
 	case "scan":
 		scan.Main()
 	case "spin":
