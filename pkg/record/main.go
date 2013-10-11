@@ -38,9 +38,7 @@ func Main() {
 		fail("Unable to start station: %v\n", err)
 	}
 
-	fmt.Fprintf(os.Stderr, "Before scan\n")
 	addr, err := st.Scan()
-	fmt.Fprintf(os.Stderr, "After scan\n")
 	if err != nil {
 		fail("Scan: %v\n", err)
 	}

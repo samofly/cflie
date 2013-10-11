@@ -24,7 +24,7 @@ const (
 	MaxChannel = 125
 )
 
-var Rates = []DataRate{DATA_RATE_250K, DATA_RATE_1M, DATA_RATE_2M}
+var Rates = []DataRate{DATA_RATE_250K} // Temporary disable, DATA_RATE_1M, DATA_RATE_2M}
 
 type DeviceInfo interface {
 	Bus() int
