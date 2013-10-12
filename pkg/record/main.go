@@ -56,6 +56,9 @@ func Main() {
 	}
 
 	for p := range flie.RecvChan {
+		if len(p) == 0 {
+			continue
+		}
 		fmt.Fprintf(f, "%+v\n", p)
 		if err = f.Sync(); err != nil {
 			fail("Unable to flush output: %v\n", err)
