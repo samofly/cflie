@@ -59,7 +59,13 @@ func Main() {
 		if len(p) == 0 {
 			continue
 		}
-		fmt.Fprintf(f, "%+v\n", p)
+		for i, v := range p {
+			if i > 0 {
+				fmt.Fprint(f, " ")
+			}
+			fmt.Fprintf(f, "%d", v)
+		}
+		fmt.Fprintln(f)
 		if err = f.Sync(); err != nil {
 			fail("Unable to flush output: %v\n", err)
 		}
