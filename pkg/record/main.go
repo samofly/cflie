@@ -63,7 +63,7 @@ func Main() {
 			if i > 0 {
 				fmt.Fprint(f, " ")
 			}
-			fmt.Fprintf(f, "%d", v)
+			fmt.Fprintf(f, "%3d", v)
 		}
 		fmt.Fprintln(f)
 		if err = f.Sync(); err != nil {
