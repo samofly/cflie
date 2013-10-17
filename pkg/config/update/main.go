@@ -11,6 +11,7 @@ import (
 
 var flags = flag.NewFlagSet("config.update", flag.ExitOnError)
 var channel = flags.Int("channel", 0, "Radio channel (1..125); ch=119 used by radio bootloader; ch=10 is a factory setting")
+var speed = flags.Int("speed", -1, "Radio speed. 0: 250 Kbit/s, 1: 1 Mbit/s, 2: 2 Mbit/s")
 
 func Main() {
 	flags.Parse(flag.Args()[2:])
@@ -36,6 +37,13 @@ func Main() {
 			log.Fatal("Channel must be positive")
 		}
 		conf.Channel = byte(*channel)
+	}
+
+	if *speed > 2 {
+		log.Fatal("Max speed: 2")
+	}
+	if *speed >= 0 {
+		conf.Speed = byte(*speed)
 	}
 
 	if err = boot.WriteConfig(dev, info, conf); err != nil {
